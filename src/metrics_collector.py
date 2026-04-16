@@ -1,9 +1,14 @@
+import random
 import time
 from dataclasses import dataclass, asdict
-from typing import List
-import numpy as np
 
-@dataclass
+import numpy as np
+import pandas as pd
+
+from src.search_space import Config
+
+
+@dataclass(frozen=True)
 class MetricsRecord:
     config_q: str
     config_b: int
@@ -18,8 +23,8 @@ class MetricsRecord:
     model: str
     timestamp: str
 
-def collect_metrics_mock(config, dataset="mock", model="mock") -> MetricsRecord:
-    import random
+
+def collect_metrics_mock(config: Config, dataset: str = "mock", model: str = "mock") -> MetricsRecord:
     base = {"fp16": 100.0, "int8": 80.0, "int4": 60.0}[config.q]
     mem = {"fp16": 16.0, "int8": 8.0, "int4": 4.5}[config.q]
     return MetricsRecord(
@@ -37,7 +42,13 @@ def collect_metrics_mock(config, dataset="mock", model="mock") -> MetricsRecord:
         timestamp=time.strftime("%Y-%m-%dT%H:%M:%S"),
     )
 
-def collect_metrics_vllm(config, vllm_output: dict, dataset="sharegpt", model="llama3-8b") -> MetricsRecord:
+
+def collect_metrics_vllm(
+    config: Config,
+    vllm_output: dict,
+    dataset: str = "sharegpt",
+    model: str = "llama3-8b",
+) -> MetricsRecord:
     ttfts = vllm_output.get("ttfts", [0])
     itls = vllm_output.get("itls", [0])
     e2e = vllm_output.get("e2e_latencies", [0])
@@ -56,8 +67,8 @@ def collect_metrics_vllm(config, vllm_output: dict, dataset="sharegpt", model="l
         timestamp=time.strftime("%Y-%m-%dT%H:%M:%S"),
     )
 
-def save_results(records: list, path: str):
-    import pandas as pd
+
+def save_results(records: list[MetricsRecord], path: str) -> pd.DataFrame:
     df = pd.DataFrame([asdict(r) for r in records])
     df.to_csv(path, index=False)
     return df
