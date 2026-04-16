@@ -1,0 +1,6 @@
+experiments/results/*.csv
+experiments/results/*.json
+analysis/plots/*.png
+__pycache__/
+*.pyc
+.pytest_cache/
