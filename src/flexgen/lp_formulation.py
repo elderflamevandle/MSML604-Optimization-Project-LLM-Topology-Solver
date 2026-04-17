@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+
 import pulp
 
 
@@ -31,7 +32,14 @@ class PlacementResult:
     status: str
 
 
+def _pv(var) -> float:
+    """Read a PuLP variable value, clamping numerical residuals to zero."""
+    v = pulp.value(var)
+    return max(0.0, v) if v is not None else 0.0
+
+
 def solve_memory_placement(capacity: MemoryCapacity, req: ModelMemoryRequirement) -> PlacementResult:
+    # Fractional placement: LP relaxation of FlexGen's block-level offloading policy
     prob = pulp.LpProblem("flexgen", pulp.LpMinimize)
 
     w_g = pulp.LpVariable("w_g", 0, 1)
@@ -61,20 +69,10 @@ def solve_memory_placement(capacity: MemoryCapacity, req: ModelMemoryRequirement
 
     prob.solve(pulp.PULP_CBC_CMD(msg=0))
 
-    objective_value = pulp.value(prob.objective) or 0.0
-    # Clamp small negative values from numerical error to 0
-    objective_value = max(0.0, objective_value)
-
     return PlacementResult(
-        w_gpu=pulp.value(w_g) or 0.0,
-        w_cpu=pulp.value(w_c) or 0.0,
-        w_disk=pulp.value(w_d) or 0.0,
-        c_gpu=pulp.value(c_g) or 0.0,
-        c_cpu=pulp.value(c_c) or 0.0,
-        c_disk=pulp.value(c_d) or 0.0,
-        h_gpu=pulp.value(h_g) or 0.0,
-        h_cpu=pulp.value(h_c) or 0.0,
-        h_disk=pulp.value(h_d) or 0.0,
-        objective=objective_value,
+        w_gpu=_pv(w_g), w_cpu=_pv(w_c), w_disk=_pv(w_d),
+        c_gpu=_pv(c_g), c_cpu=_pv(c_c), c_disk=_pv(c_d),
+        h_gpu=_pv(h_g), h_cpu=_pv(h_c), h_disk=_pv(h_d),
+        objective=max(0.0, pulp.value(prob.objective) or 0.0),
         status=pulp.LpStatus[prob.status],
     )
