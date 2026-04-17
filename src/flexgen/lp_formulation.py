@@ -32,10 +32,12 @@ class PlacementResult:
     status: str
 
 
-def _pv(var) -> float:
+def _pv(var, eps: float = 1e-9) -> float:
     """Read a PuLP variable value, clamping numerical residuals to zero."""
     v = pulp.value(var)
-    return max(0.0, v) if v is not None else 0.0
+    if v is None:
+        return 0.0
+    return 0.0 if abs(v) < eps else max(0.0, v)
 
 
 def solve_memory_placement(capacity: MemoryCapacity, req: ModelMemoryRequirement) -> PlacementResult:

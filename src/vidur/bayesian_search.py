@@ -33,7 +33,14 @@ def run_bayesian_search(
     study = optuna.create_study(direction="maximize")
     study.optimize(objective, n_trials=n_trials)
 
-    best = study.best_trial
+    try:
+        best = study.best_trial
+    except ValueError:
+        return None, None, results
+
     best_config = Config(q=best.params["q"], b=best.params["b"], p=best.params["p"])
-    best_record = measure_fn(best_config)
+    best_record = next(
+        r["record"] for r in results
+        if r["config"] == {"q": best_config.q, "b": best_config.b, "p": best_config.p}
+    )
     return best_config, best_record, results

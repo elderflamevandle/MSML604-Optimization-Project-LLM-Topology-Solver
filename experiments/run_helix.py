@@ -22,7 +22,8 @@ CLUSTER = {
 
 
 def main() -> None:
-    os.makedirs("experiments/results", exist_ok=True)
+    results_dir = os.path.join(os.path.dirname(__file__), "results")
+    os.makedirs(results_dir, exist_ok=True)
     print("Solving Helix MILP (32 layers, 2-GPU cluster)...")
     result = solve_max_flow_placement(CLUSTER["nodes"], CLUSTER["links"], num_layers=32)
     print(f"Status: {result.status} | Total flow: {result.total_flow:.4f}")
@@ -34,9 +35,10 @@ def main() -> None:
         "flow_assignments": {str(k): v for k, v in result.flow_assignments.items()},
         "layer_placement": result.layer_placement,
     }
-    with open("experiments/results/helix_milp.json", "w") as f:
+    out_path = os.path.join(results_dir, "helix_milp.json")
+    with open(out_path, "w") as f:
         json.dump(output, f, indent=2)
-    print("Saved experiments/results/helix_milp.json")
+    print(f"Saved {out_path}")
 
 
 if __name__ == "__main__":

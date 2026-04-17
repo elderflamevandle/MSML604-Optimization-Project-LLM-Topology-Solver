@@ -27,10 +27,11 @@ def main(use_gpu: bool = False) -> None:
         print(f"Best: q={bayes_best.q}, b={bayes_best.b}, p={bayes_best.p} "
               f"| QPS={bayes_record.qps:.2f}, delay_p99={bayes_record.delay_p99_ms:.1f}ms")
 
-    os.makedirs("experiments/results", exist_ok=True)
-    save_results([r["record"] for r in grid_results], "experiments/results/vidur_grid.csv")
-    save_results([r["record"] for r in bayes_results], "experiments/results/vidur_bayes.csv")
-    print("\nResults saved to experiments/results/")
+    results_dir = os.path.join(os.path.dirname(__file__), "results")
+    os.makedirs(results_dir, exist_ok=True)
+    save_results([r["record"] for r in grid_results], os.path.join(results_dir, "vidur_grid.csv"))
+    save_results([r["record"] for r in bayes_results], os.path.join(results_dir, "vidur_bayes.csv"))
+    print(f"\nResults saved to {results_dir}/")
 
 
 if __name__ == "__main__":

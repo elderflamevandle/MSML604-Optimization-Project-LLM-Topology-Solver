@@ -15,7 +15,8 @@ SCENARIOS = [
 
 
 def main() -> None:
-    os.makedirs("experiments/results", exist_ok=True)
+    results_dir = os.path.join(os.path.dirname(__file__), "results")
+    os.makedirs(results_dir, exist_ok=True)
     output = []
     for s in SCENARIOS:
         result = solve_memory_placement(s["cap"], LLAMA3_8B)
@@ -29,9 +30,10 @@ def main() -> None:
             "c_gpu": result.c_gpu, "c_cpu": result.c_cpu, "c_disk": result.c_disk,
             "h_gpu": result.h_gpu, "h_cpu": result.h_cpu, "h_disk": result.h_disk,
         })
-    with open("experiments/results/flexgen_lp.json", "w") as f:
+    out_path = os.path.join(results_dir, "flexgen_lp.json")
+    with open(out_path, "w") as f:
         json.dump(output, f, indent=2)
-    print("Saved experiments/results/flexgen_lp.json")
+    print(f"Saved {out_path}")
 
 
 if __name__ == "__main__":
