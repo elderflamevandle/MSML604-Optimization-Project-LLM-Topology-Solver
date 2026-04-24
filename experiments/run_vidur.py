@@ -8,10 +8,19 @@ from src.vidur.grid_search import run_grid_search
 from src.vidur.bayesian_search import run_bayesian_search
 
 
-def main(use_gpu: bool = False) -> None:
+def main(use_gpu: bool = False, model_id: str = "TinyLlama/TinyLlama-1.1B-Chat-v1.0") -> None:
     if use_gpu:
-        raise NotImplementedError("Wire vLLM here on Day 3 - see Task 8")
-    measure_fn = collect_metrics_mock
+        from src.vllm_runner import run_vllm_benchmark
+        prompts = [
+            "Explain the concept of machine learning in simple terms.",
+            "What are the main differences between Python and Java?",
+            "How does a neural network learn from data?",
+            "Describe the process of natural language processing.",
+            "What is the significance of the transformer architecture in AI?",
+        ] * 4  # 20 prompts total for a quick local test
+        measure_fn = lambda config: run_vllm_benchmark(config, prompts, model_id=model_id)
+    else:
+        measure_fn = collect_metrics_mock
 
     print("=== Grid Search ===")
     grid_best, grid_record, grid_results = run_grid_search(measure_fn)
@@ -35,4 +44,9 @@ def main(use_gpu: bool = False) -> None:
 
 
 if __name__ == "__main__":
-    main(use_gpu="--gpu" in sys.argv)
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--gpu", action="store_true")
+    parser.add_argument("--model", default="TinyLlama/TinyLlama-1.1B-Chat-v1.0")
+    args = parser.parse_args()
+    main(use_gpu=args.gpu, model_id=args.model)

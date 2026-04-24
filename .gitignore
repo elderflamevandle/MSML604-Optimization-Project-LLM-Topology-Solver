@@ -4,3 +4,9 @@ analysis/plots/*.png
 __pycache__/
 *.pyc
 .pytest_cache/
+
+.claude/
+.cursor/
+CLAUDE.md
+.venv/
+venv312/
