@@ -77,3 +77,28 @@ To validate the mathematical equations and logic constraints, you can run the co
 ```bash
 pytest tests/
 ```
+
+---
+
+## 🛠️ FlexGen Faithful Policy Search (in development)
+
+A faithful re-implementation of the FlexGen paper's policy search is being added. When complete, it will replace the current toy LP at `src/flexgen/lp_formulation.py` with an optimizer that:
+
+- Auto-detects the host system (GPU VRAM, RAM, disk; PCIe / disk bandwidth; compute throughput) — works across servers without hardcoded values.
+- Auto-introspects any HuggingFace causal-LM via its `config.json` (no weight download).
+- Solves for **all 14 FlexGen decision variables**: GPU batch size, # GPU batches per block, 4-bit compression flag, CPU compute delegation flag, I/O–compute overlap flag, and the 9 placement fractions for weights / KV cache / activations across GPU / CPU / disk.
+
+### Directories created by the toolchain
+
+- `configs/system_calibration/` — per-machine calibration cache (gitignored). First run on a new server takes ~30 s; subsequent runs reuse the cache.
+- `experiments/logs/` — per-run log files (gitignored). One file per CLI invocation.
+
+### Additional dependencies
+
+The standard `uv pip install -r requirements.txt` now also installs:
+
+- `huggingface_hub` — fetches model `config.json`
+- `pyyaml` — workload spec parsing
+- `psutil` — live RAM / disk capacity reads
+
+Full CLI documentation will land here as each task in [`docs/superpowers/plans/2026-04-26-flexgen-faithful.md`](docs/superpowers/plans/2026-04-26-flexgen-faithful.md) ships.
