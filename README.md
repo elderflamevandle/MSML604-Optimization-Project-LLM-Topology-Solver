@@ -93,6 +93,16 @@ A faithful re-implementation of the FlexGen paper's policy search is being added
 - `configs/system_calibration/` — per-machine calibration cache (gitignored). First run on a new server takes ~30 s; subsequent runs reuse the cache.
 - `experiments/logs/` — per-run log files (gitignored). One file per CLI invocation.
 
+### Per-machine calibration
+
+The first time the FlexGen optimizer runs on a new server, it micro-benchmarks the host (~30 s):
+
+- **PCIe bandwidth** — timed pinned host→device tensor copies (or 16 GB/s fallback if no CUDA)
+- **Disk bandwidth** — timed write+read of a 200 MB probe file under `configs/system_calibration/`
+- **Compute throughput** — timed `torch.matmul` at fp16 (with int8/int4 scaled approximations)
+
+Results are cached under [`configs/system_calibration/{hostname}_{gpu_model}.json`](configs/system_calibration/), keyed per machine. Subsequent runs on the same box reuse the cache and add zero startup latency. Force a recalibration after a hardware upgrade with `--recalibrate` (CLI lands in Task 12).
+
 ### Live system probe
 
 Each run reads volatile capacities directly from the host — no hardcoded values:

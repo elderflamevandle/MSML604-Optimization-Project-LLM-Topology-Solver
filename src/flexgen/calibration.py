@@ -89,3 +89,43 @@ def bench_disk_bw_gbs(probe_dir: str, size_mb: int = 200, n_repeats: int = 3) ->
     median_t = sorted(times)[len(times) // 2]
     bytes_moved = 2 * size_mb * 1024 * 1024
     return (bytes_moved / 1024**3) / median_t
+
+
+def machine_id() -> str:
+    host = socket.gethostname()
+    if torch.cuda.is_available():
+        gpu = torch.cuda.get_device_name(0).replace(" ", "_")
+    else:
+        gpu = "no_cuda"
+    return f"{host}_{gpu}"
+
+
+def _calibration_cache_path(cache_dir: str, key: str) -> Path:
+    return Path(cache_dir) / f"{key}.json"
+
+
+def ensure_calibration(
+    cache_dir: str,
+    key: str | None = None,
+    recalibrate: bool = False,
+    probe_dir: str | None = None,
+) -> SystemCoefficients:
+    key = key or machine_id()
+    cache_path = _calibration_cache_path(cache_dir, key)
+
+    if cache_path.exists() and not recalibrate:
+        logger.info("Loaded calibration from cache: %s", cache_path)
+        return SystemCoefficients(**json.loads(cache_path.read_text()))
+
+    logger.info("Running calibration for machine_id=%s", key)
+    coef = SystemCoefficients(
+        pcie_bw_gbs=bench_pcie_bw_gbs(),
+        disk_bw_gbs=bench_disk_bw_gbs(probe_dir=probe_dir or cache_dir),
+        tflops_fp16=bench_compute_tflops(dtype="fp16"),
+        tflops_int8=bench_compute_tflops(dtype="int8"),
+        tflops_int4=bench_compute_tflops(dtype="int4"),
+    )
+    cache_path.parent.mkdir(parents=True, exist_ok=True)
+    cache_path.write_text(json.dumps(asdict(coef), indent=2))
+    logger.info("Wrote calibration cache: %s", cache_path)
+    return coef
