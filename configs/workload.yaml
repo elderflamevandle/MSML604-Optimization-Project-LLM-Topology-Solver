@@ -1,0 +1,2 @@
+prompt_len: 512
+decode_len: 128

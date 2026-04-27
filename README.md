@@ -93,6 +93,17 @@ A faithful re-implementation of the FlexGen paper's policy search is being added
 - `configs/system_calibration/` — per-machine calibration cache (gitignored). First run on a new server takes ~30 s; subsequent runs reuse the cache.
 - `experiments/logs/` — per-run log files (gitignored). One file per CLI invocation.
 
+### Workload spec
+
+The workload (sequence lengths) is read from a YAML file. Default at [`configs/workload.yaml`](configs/workload.yaml):
+
+```yaml
+prompt_len: 512   # tokens per request (prefill phase)
+decode_len: 128   # tokens generated per request (decode phase)
+```
+
+All sequences in a block share the same prompt / decode lengths (matches the FlexGen paper's offline-batched model). Future work: trace-driven sampling from `data/sharegpt_vicuna/` or `data/vidur_traces/`.
+
 ### Additional dependencies
 
 The standard `uv pip install -r requirements.txt` now also installs:
