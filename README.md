@@ -82,6 +82,8 @@ pytest tests/
 
 ## 🛠️ FlexGen Faithful Policy Search
 
+> 📘 **For a complete step-by-step walkthrough** (clone → CUDA install → HF auth → run → inspect results → write your own tests), see **[USER-GUIDE-FLEXGEN.md](USER-GUIDE-FLEXGEN.md)**.
+
 ### Quick start
 
 ```bash
