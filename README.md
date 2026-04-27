@@ -93,6 +93,22 @@ A faithful re-implementation of the FlexGen paper's policy search is being added
 - `configs/system_calibration/` — per-machine calibration cache (gitignored). First run on a new server takes ~30 s; subsequent runs reuse the cache.
 - `experiments/logs/` — per-run log files (gitignored). One file per CLI invocation.
 
+### Optimizer structure (faithful FlexGen policy search)
+
+The full search enumerates the 5 discrete decision variables and solves an inner LP for the 9 placement fractions at each enumerated point:
+
+| Outer (enumerated, 480 points total) | Inner (LP, 9 fractions) |
+|---|---|
+| `gbs ∈ {1, 2, 4, 8, 16, 32}` | `w_g, w_c, w_d` (weights placement) |
+| `num_gb ∈ {1, 2, 4, 8, 16}` | `c_g, c_c, c_d` (KV cache placement) |
+| `compression ∈ {fp16, int4}` | `h_g, h_c, h_d` (activations placement) |
+| `cpu_compute_delegate ∈ {False, True}` | |
+| `overlap_io_compute ∈ {False, True}` | |
+
+End-to-end search time on a typical box: ~30 seconds.
+
+The objective is per-token latency `T_block / (gbs · num_gb)`, where `T_block` decomposes into compute, weight-load, KV I/O, and activation I/O terms per layer. With overlap=True the LP uses an epigraph variable `τ ≥ each term` (max), with overlap=False the terms sum.
+
 ### Plug any HuggingFace causal-LM
 
 The optimizer takes a HuggingFace model id and pulls only `config.json` (~4 KB — no weight download needed for the math). Architecture fields like `num_hidden_layers`, `hidden_size`, `num_attention_heads`, `num_key_value_heads` (GQA-aware), and `intermediate_size` are parsed and used to derive memory footprints analytically.
