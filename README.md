@@ -80,13 +80,69 @@ pytest tests/
 
 ---
 
-## 🛠️ FlexGen Faithful Policy Search (in development)
+## 🛠️ FlexGen Faithful Policy Search
 
-A faithful re-implementation of the FlexGen paper's policy search is being added. When complete, it will replace the current toy LP at `src/flexgen/lp_formulation.py` with an optimizer that:
+### Quick start
 
-- Auto-detects the host system (GPU VRAM, RAM, disk; PCIe / disk bandwidth; compute throughput) — works across servers without hardcoded values.
-- Auto-introspects any HuggingFace causal-LM via its `config.json` (no weight download).
-- Solves for **all 14 FlexGen decision variables**: GPU batch size, # GPU batches per block, 4-bit compression flag, CPU compute delegation flag, I/O–compute overlap flag, and the 9 placement fractions for weights / KV cache / activations across GPU / CPU / disk.
+```bash
+# Default: Llama-3-8B with the bundled workload, on your auto-detected system
+python experiments/run_flexgen.py
+
+# Pick any HuggingFace causal-LM
+python experiments/run_flexgen.py --model mistralai/Mistral-7B-v0.1
+
+# Force a calibration refresh (after a hardware upgrade)
+python experiments/run_flexgen.py --recalibrate
+
+# DEBUG-level console output
+python experiments/run_flexgen.py --verbose
+```
+
+### What you get back
+
+Each invocation writes two files (timestamped, UTC):
+
+- `experiments/results/flexgen_<ts>.json` — best policy with all **14 decision variables**, full system + model + workload context, top-20 candidates for sensitivity analysis.
+- `experiments/logs/flexgen_<ts>.log` — DEBUG-level structured log of the entire run (machine_id, calibration values, model dimensions, search progress, final policy).
+
+Sample best-policy block:
+
+```json
+{
+  "gpu_batch_size":         8,
+  "num_gpu_batches":        4,
+  "block_size":             32,
+  "compression":            "int4",
+  "cpu_compute_delegate":   true,
+  "overlap_io_compute":     true,
+  "weights":     { "gpu": 0.45, "cpu": 0.55, "disk": 0.0 },
+  "kv_cache":    { "gpu": 0.20, "cpu": 0.80, "disk": 0.0 },
+  "activations": { "gpu": 1.00, "cpu": 0.00, "disk": 0.0 }
+}
+```
+
+### CLI flags
+
+| Flag | Default | What it does |
+|---|---|---|
+| `--model <hf_id>` | `meta-llama/Meta-Llama-3-8B` | Any HuggingFace causal-LM id |
+| `--workload <yaml>` | `configs/workload.yaml` | Path to workload YAML |
+| `--recalibrate` | off | Force re-running benchmarks even if cached |
+| `--verbose` | off | DEBUG-level on console (file always at DEBUG) |
+| `--output-dir <dir>` | `experiments/results` | Where the JSON lands |
+| `--log-dir <dir>` | `experiments/logs` | Where the log lands |
+| `--cache-dir <dir>` | `configs/system_calibration` | Where calibration JSON lives |
+
+### What changed compared to the original toy LP
+
+The previous `src/flexgen/lp_formulation.py` was a tiny LP that minimized an
+arbitrary "off-GPU penalty" with hardcoded model byte counts. The new pipeline:
+
+1. **Auto-detects** the host (capacities + bandwidths + compute throughput) — no hardcoded values.
+2. **Auto-introspects** any HF model from its `config.json`.
+3. **Faithfully implements** the FlexGen paper's two-level policy search: outer enumeration over (`gbs`, `num_gb`, compression, CPU-delegate, I/O–compute overlap), inner LP for the 9 placement fractions, minimizing per-token latency via the paper's actual cost model.
+
+
 
 ### Directories created by the toolchain
 
