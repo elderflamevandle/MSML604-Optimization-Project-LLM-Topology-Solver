@@ -93,6 +93,24 @@ A faithful re-implementation of the FlexGen paper's policy search is being added
 - `configs/system_calibration/` — per-machine calibration cache (gitignored). First run on a new server takes ~30 s; subsequent runs reuse the cache.
 - `experiments/logs/` — per-run log files (gitignored). One file per CLI invocation.
 
+### Live system probe
+
+Each run reads volatile capacities directly from the host — no hardcoded values:
+
+| Field | Source |
+|---|---|
+| `gpu_vram_gb` (free) | `torch.cuda.mem_get_info()` |
+| `ram_gb` (free) | `psutil.virtual_memory().available` |
+| `disk_gb` (free) | `psutil.disk_usage(project_root).free` |
+
+If CUDA is unavailable, `gpu_vram_gb` reports 0.0. Quick check that the probe works on your box:
+
+```bash
+python -c "from src.flexgen.system_probe import probe_live_capacity; \
+           c = probe_live_capacity('.'); \
+           print(f'GPU={c.gpu_vram_gb:.1f}GB RAM={c.ram_gb:.1f}GB DISK={c.disk_gb:.1f}GB')"
+```
+
 ### Workload spec
 
 The workload (sequence lengths) is read from a YAML file. Default at [`configs/workload.yaml`](configs/workload.yaml):
