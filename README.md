@@ -142,6 +142,16 @@ arbitrary "off-GPU penalty" with hardcoded model byte counts. The new pipeline:
 2. **Auto-introspects** any HF model from its `config.json`.
 3. **Faithfully implements** the FlexGen paper's two-level policy search: outer enumeration over (`gbs`, `num_gb`, compression, CPU-delegate, I/O–compute overlap), inner LP for the 9 placement fractions, minimizing per-token latency via the paper's actual cost model.
 
+### Running the FlexGen test suite
+
+```bash
+pytest tests/flexgen/ -v
+```
+
+Covers system probe, calibration cache, HF model introspection, cost-model property tests
+(overlap dominance, batch amortization, GQA-aware delegate cost), inner LP optimality,
+end-to-end orchestration, and plot generation.
+
 
 
 ### Directories created by the toolchain
