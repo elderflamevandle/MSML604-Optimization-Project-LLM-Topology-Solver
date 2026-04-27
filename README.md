@@ -93,6 +93,17 @@ A faithful re-implementation of the FlexGen paper's policy search is being added
 - `configs/system_calibration/` — per-machine calibration cache (gitignored). First run on a new server takes ~30 s; subsequent runs reuse the cache.
 - `experiments/logs/` — per-run log files (gitignored). One file per CLI invocation.
 
+### Plug any HuggingFace causal-LM
+
+The optimizer takes a HuggingFace model id and pulls only `config.json` (~4 KB — no weight download needed for the math). Architecture fields like `num_hidden_layers`, `hidden_size`, `num_attention_heads`, `num_key_value_heads` (GQA-aware), and `intermediate_size` are parsed and used to derive memory footprints analytically.
+
+Tested architectures (Llama-style with SwiGLU FFN):
+- `meta-llama/Meta-Llama-3-8B`
+- `mistralai/Mistral-7B-v0.1`
+- `Qwen/Qwen2-1.5B`
+
+For gated repos (e.g. Llama), authenticate first: `huggingface-cli login`.
+
 ### Per-machine calibration
 
 The first time the FlexGen optimizer runs on a new server, it micro-benchmarks the host (~30 s):
