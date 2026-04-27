@@ -1,6 +1,7 @@
 from src.flexgen.cost_model import (
     EnumPoint, PlacementFractions, prefill_flops_per_layer, decode_flops_per_layer,
     LayerTerms, prefill_layer_terms, decode_layer_terms,
+    t_block_seconds, t_per_token_seconds,
 )
 from src.flexgen.model_introspect import ModelSpec
 from src.flexgen.calibration import SystemCoefficients
@@ -83,3 +84,24 @@ def test_delegate_replaces_kv_term_with_q_transfer():
     no_del = prefill_layer_terms(enum_no_del, on_cpu, spec_no_gqa, WL, COEF)
     yes_del = prefill_layer_terms(enum_del, on_cpu, spec_no_gqa, WL, COEF)
     assert yes_del.t_io_kv < no_del.t_io_kv
+
+
+def test_overlap_no_worse_than_sum():
+    p = PlacementFractions(w_g=0, w_c=1, w_d=0, c_g=0, c_c=1, c_d=0, h_g=0, h_c=1, h_d=0)
+    enum_sum = EnumPoint(gbs=4, num_gb=2, q="fp16", delegate=False, overlap=False)
+    enum_max = EnumPoint(gbs=4, num_gb=2, q="fp16", delegate=False, overlap=True)
+    t_sum = t_block_seconds(enum_sum, p, SPEC, WL, COEF)
+    t_max = t_block_seconds(enum_max, p, SPEC, WL, COEF)
+    assert t_max <= t_sum + 1e-9
+
+
+def test_t_per_token_divides_block_by_effective_batch():
+    # Weights on CPU: per-block weight-load is fixed cost amortized over B*(s+d) tokens,
+    # so a bigger block lowers per-token latency. (With everything on GPU, compute is the
+    # only cost and it scales linearly with B, so per-token is invariant — different test.)
+    p = PlacementFractions(w_g=0, w_c=1, w_d=0, c_g=1, c_c=0, c_d=0, h_g=1, h_c=0, h_d=0)
+    enum1 = EnumPoint(gbs=1, num_gb=1, q="fp16", delegate=False, overlap=False)
+    enum8 = EnumPoint(gbs=4, num_gb=2, q="fp16", delegate=False, overlap=False)
+    tt1 = t_per_token_seconds(enum1, p, SPEC, WL, COEF)
+    tt8 = t_per_token_seconds(enum8, p, SPEC, WL, COEF)
+    assert tt8 < tt1

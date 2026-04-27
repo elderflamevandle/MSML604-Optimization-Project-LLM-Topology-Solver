@@ -95,6 +95,12 @@ def prefill_layer_terms(
     return LayerTerms(t_compute=t_compute, t_load_w=t_load_w, t_io_kv=t_io_kv, t_io_act=t_io_act)
 
 
+def _combine(terms: LayerTerms, overlap: bool) -> float:
+    if overlap:
+        return max(terms.t_compute, terms.t_load_w, terms.t_io_kv, terms.t_io_act)
+    return terms.t_compute + terms.t_load_w + terms.t_io_kv + terms.t_io_act
+
+
 def decode_layer_terms(
     enum: EnumPoint, p: PlacementFractions,
     spec: ModelSpec, wl: WorkloadSpec, coef: SystemCoefficients,
@@ -130,3 +136,27 @@ def decode_layer_terms(
     )
 
     return LayerTerms(t_compute=t_compute, t_load_w=t_load_w, t_io_kv=t_io_kv, t_io_act=t_io_act)
+
+
+def t_block_seconds(
+    enum: EnumPoint, p: PlacementFractions,
+    spec: ModelSpec, wl: WorkloadSpec, coef: SystemCoefficients,
+) -> float:
+    pre = prefill_layer_terms(enum, p, spec, wl, coef)
+    t_pre_layer = _combine(pre, enum.overlap)
+
+    s = wl.prompt_len
+    d = wl.decode_len
+    kv_avg = s + (d - 1) / 2.0 if d > 1 else s
+    dec = decode_layer_terms(enum, p, spec, wl, coef, kv_len=int(kv_avg))
+    t_dec_layer = _combine(dec, enum.overlap)
+
+    t_layer = t_pre_layer + d * t_dec_layer
+    return spec.num_layers * t_layer
+
+
+def t_per_token_seconds(
+    enum: EnumPoint, p: PlacementFractions,
+    spec: ModelSpec, wl: WorkloadSpec, coef: SystemCoefficients,
+) -> float:
+    return t_block_seconds(enum, p, spec, wl, coef) / enum.block_size
