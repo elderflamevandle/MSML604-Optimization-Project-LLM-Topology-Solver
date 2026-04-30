@@ -12,3 +12,4 @@ __pycache__/
 CLAUDE.md
 .venv/
 venv312/
+models/*

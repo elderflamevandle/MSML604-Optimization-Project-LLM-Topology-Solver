@@ -10,6 +10,12 @@ This runs FlexGen tests, runs the optimizer on your local Qwen folder, prints th
 python pipeline.py
 ```
 
+The final terminal section is one baseline-vs-optimized comparison table. For the full 14-parameter/top-k report:
+
+```bash
+python pipeline.py --detailed-report
+```
+
 Settings come from:
 
 ```bash
@@ -20,6 +26,12 @@ With actual Qwen text generation too:
 
 ```bash
 python pipeline.py --run-inference --device cuda
+```
+
+Baseline comparison JSON is saved under:
+
+```text
+experiments/baseline_comparisons/
 ```
 
 ## 0.1 Local Synthetic Test, No Qwen Load

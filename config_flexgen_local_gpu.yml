@@ -1,0 +1,54 @@
+# Local GPU smoke-test config.
+# Uses a tiny downloaded model so this machine can run real inference.
+
+paths:
+  model: models/smollm2-135m-instruct
+  workload: configs/workload.yaml
+  output_dir: experiments/results
+  baseline_dir: experiments/baseline_comparisons
+  log_dir: experiments/logs
+  cache_dir: configs/system_calibration
+
+tests:
+  target: tests/flexgen
+  skip: false
+  quiet: true
+
+flexgen:
+  recalibrate: false
+  verbose: false
+
+inference:
+  enabled: true
+  prompt: Explain GPU memory offloading for LLM inference in two sentences.
+  max_new_tokens: 60
+  device: cuda
+  device_map:
+  dtype: auto
+
+local_synthetic:
+  top_k: 20
+
+  model:
+    name: synthetic-smollm2-135m
+    num_layers: 30
+    hidden_dim: 576
+    num_heads: 9
+    num_kv_heads: 3
+    intermediate_size: 1536
+    vocab_size: 49152
+    dtype_bytes: 2
+
+  system:
+    gpu_vram_gb: 6.0
+    ram_gb: 16.0
+    disk_gb: 500.0
+    pcie_bw_gbs: 12.0
+    disk_bw_gbs: 2.0
+    tflops_fp16: 20.0
+    tflops_int8: 40.0
+    tflops_int4: 80.0
+
+  workload:
+    prompt_len: 128
+    decode_len: 64

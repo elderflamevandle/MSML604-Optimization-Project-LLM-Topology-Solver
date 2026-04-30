@@ -70,6 +70,14 @@ Edit `config_flexgen.yml`, not `pipeline.py`, when the model path or run setting
 python pipeline.py
 ```
 
+The normal terminal output is intentionally concise: tests run first, policy search runs next, files are saved, and the final terminal section is one baseline-vs-optimized comparison table.
+
+For the full model/system/14-parameter/top-k dump:
+
+```bash
+python pipeline.py --detailed-report
+```
+
 ## Verbose Optimizer Logs
 
 ```bash
@@ -135,6 +143,7 @@ The pipeline writes:
 
 ```text
 experiments/results/flexgen_<timestamp>.json
+experiments/baseline_comparisons/baseline_comparison_<model>_<timestamp>.json
 experiments/logs/flexgen_<timestamp>.log
 experiments/results/flexgen_pipeline_<timestamp>.json
 ```

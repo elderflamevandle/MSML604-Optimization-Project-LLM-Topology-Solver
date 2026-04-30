@@ -56,27 +56,66 @@ def extract_decision_variables_14(payload: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def print_policy_summary(payload: dict[str, Any]) -> None:
+def _print_mapping(title: str, values: dict[str, Any]) -> None:
+    print(f"\n=== {title} ===")
+    for name, value in values.items():
+        print(f"{name}: {value}")
+
+
+def _print_top_k_candidates(payload: dict[str, Any], limit: int | None = None) -> None:
+    candidates = payload.get("top_k_candidates", [])
+    if not candidates:
+        return
+
+    shown = candidates if limit is None else candidates[:limit]
+    print(f"\n=== Top Policy Candidates ({len(shown)} of {len(candidates)}) ===")
+    header = (
+        "rank | latency_ms | block | gbs | num_gb | q    | delegate | overlap | "
+        "w(g/c/d)        | kv(g/c/d)       | act(g/c/d)"
+    )
+    print(header)
+    print("-" * len(header))
+    for rank, candidate in enumerate(shown, start=1):
+        weights = candidate["weights"]
+        kv_cache = candidate["kv_cache"]
+        activations = candidate["activations"]
+        print(
+            f"{rank:>4} | "
+            f"{candidate['per_token_latency_ms']:>10} | "
+            f"{candidate['block_size']:>5} | "
+            f"{candidate['gpu_batch_size']:>3} | "
+            f"{candidate['num_gpu_batches']:>6} | "
+            f"{candidate['compression']:<4} | "
+            f"{str(candidate['cpu_compute_delegate']):<8} | "
+            f"{str(candidate['overlap_io_compute']):<7} | "
+            f"{weights['gpu']:.4f}/{weights['cpu']:.4f}/{weights['disk']:.4f} | "
+            f"{kv_cache['gpu']:.4f}/{kv_cache['cpu']:.4f}/{kv_cache['disk']:.4f} | "
+            f"{activations['gpu']:.4f}/{activations['cpu']:.4f}/{activations['disk']:.4f}"
+        )
+
+
+def print_policy_summary(payload: dict[str, Any], top_k_limit: int | None = None) -> None:
     decisions = extract_decision_variables_14(payload)
     best = payload["best_policy"]
-    objective = payload["objective"]
-    system = payload["input"]["system"]
+    inputs = payload["input"]
+
+    print("\n" + "=" * 72)
+    print("FlexGen Policy Search Terminal Report")
+    print("=" * 72)
+    print(f"timestamp: {payload.get('timestamp')}")
+    print(f"machine_id: {payload.get('machine_id')}")
+
+    _print_mapping("Model Inputs", inputs["model"])
+    _print_mapping("Workload Inputs", inputs["workload"])
+    _print_mapping("System / Calibration Inputs", inputs["system"])
 
     print("\n=== FlexGen 14 policy parameters ===")
     for idx, (name, value) in enumerate(decisions.items(), start=1):
         print(f"{idx:02d}. {name}: {value}")
 
-    print("\n=== Derived value ===")
-    print(f"block_size: {best['block_size']}")
-
-    print("\n=== Objective ===")
-    print(f"per_token_latency_ms: {objective['per_token_latency_ms']}")
-    print(f"throughput_tok_s: {objective['throughput_tok_s']}")
-    print(f"t_block_ms: {objective['t_block_ms']}")
-
-    print("\n=== Measured/probed system inputs ===")
-    for name, value in system.items():
-        print(f"{name}: {value}")
+    _print_mapping("Derived Values", {"block_size": best["block_size"]})
+    _print_mapping("Objective Metrics", payload["objective"])
+    _print_top_k_candidates(payload, limit=top_k_limit)
 
 
 def write_pipeline_summary(
@@ -84,6 +123,7 @@ def write_pipeline_summary(
     tests: PipelineTestRun,
     flexgen_result_path: str,
     flexgen_payload: dict[str, Any],
+    baseline_comparison_path: str | None,
     inference_result_path: str | None,
 ) -> str:
     Path(output_dir).mkdir(parents=True, exist_ok=True)
@@ -93,6 +133,7 @@ def write_pipeline_summary(
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "tests": asdict(tests),
         "flexgen_result_path": flexgen_result_path,
+        "baseline_comparison_path": baseline_comparison_path,
         "inference_result_path": inference_result_path,
         "decision_variables_14": extract_decision_variables_14(flexgen_payload),
         "derived": {
@@ -147,6 +188,7 @@ def main() -> None:
                         help="HuggingFace model id or local Qwen folder.")
     parser.add_argument("--workload", default=None)
     parser.add_argument("--output-dir", default=None)
+    parser.add_argument("--baseline-dir", default=None)
     parser.add_argument("--log-dir", default=None)
     parser.add_argument("--cache-dir", default=None)
     parser.add_argument("--test-target", default=None)
@@ -154,6 +196,8 @@ def main() -> None:
     parser.add_argument("--test-verbose", action="store_true", default=None)
     parser.add_argument("--recalibrate", action="store_true", default=None)
     parser.add_argument("--verbose", action="store_true", default=None)
+    parser.add_argument("--detailed-report", action="store_true",
+                        help="Print full model/system inputs, 14 policy parameters, and top-k candidates.")
 
     parser.add_argument("--run-inference", action="store_true", default=None,
                         help="Also load Qwen and generate text after policy search.")
@@ -179,6 +223,10 @@ def main() -> None:
     )
     args.output_dir = resolve_repo_path(
         override(require_value(paths_cfg, "output_dir", "paths"), args.output_dir),
+        ROOT,
+    )
+    args.baseline_dir = resolve_repo_path(
+        override(require_value(paths_cfg, "baseline_dir", "paths"), args.baseline_dir),
         ROOT,
     )
     args.log_dir = resolve_repo_path(
@@ -230,7 +278,17 @@ def main() -> None:
     )
 
     flexgen_payload = json.loads(Path(flexgen_result_path).read_text(encoding="utf-8"))
-    print_policy_summary(flexgen_payload)
+    if args.detailed_report:
+        print_policy_summary(flexgen_payload)
+
+    from src.flexgen.baseline_compare import (
+        build_baseline_comparison,
+        print_baseline_comparison,
+        write_baseline_comparison,
+    )
+
+    comparison = build_baseline_comparison(flexgen_payload)
+    baseline_comparison_path = write_baseline_comparison(comparison, args.baseline_dir)
 
     inference_result_path = run_optional_inference(args)
 
@@ -239,12 +297,16 @@ def main() -> None:
         tests=tests,
         flexgen_result_path=flexgen_result_path,
         flexgen_payload=flexgen_payload,
+        baseline_comparison_path=baseline_comparison_path,
         inference_result_path=inference_result_path,
     )
 
     print("\n=== Pipeline files ===")
     print(f"flexgen_result_path: {flexgen_result_path}")
+    print(f"baseline_comparison_path: {baseline_comparison_path}")
     print(f"pipeline_summary_path: {summary_path}")
+
+    print_baseline_comparison(comparison)
 
 
 if __name__ == "__main__":

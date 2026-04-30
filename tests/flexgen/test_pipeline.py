@@ -60,6 +60,7 @@ def test_write_pipeline_summary(tmp_path):
         tests=PipelineTestRun(command=["python", "-m", "pytest"], returncode=0),
         flexgen_result_path="experiments/results/flexgen_x.json",
         flexgen_payload=_payload(),
+        baseline_comparison_path="experiments/baseline_comparisons/baseline_x.json",
         inference_result_path=None,
     )
 
@@ -67,3 +68,4 @@ def test_write_pipeline_summary(tmp_path):
     assert len(data["decision_variables_14"]) == 14
     assert data["derived"]["block_size"] == 32
     assert data["tests"]["returncode"] == 0
+    assert data["baseline_comparison_path"].endswith("baseline_x.json")

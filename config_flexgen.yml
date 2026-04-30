@@ -5,6 +5,7 @@ paths:
   model: /home/cbagul07/MSML604/MSML604-Optimization-Project-LLM-Topology-Solver/models/Qwen/
   workload: configs/workload.yaml
   output_dir: experiments/results
+  baseline_dir: experiments/baseline_comparisons
   log_dir: experiments/logs
   cache_dir: configs/system_calibration
 
@@ -51,4 +52,3 @@ local_synthetic:
   workload:
     prompt_len: 512
     decode_len: 128
-
