@@ -6,11 +6,19 @@ Run this from the repo root on the HPC GPU server:
 python pipeline.py
 ```
 
-By default, it uses your local Qwen folder:
+By default, it reads settings from:
+
+```text
+config_flexgen.yml
+```
+
+That config currently points to your local Qwen folder:
 
 ```text
 /home/cbagul07/MSML604/MSML604-Optimization-Project-LLM-Topology-Solver/models/Qwen/
 ```
+
+Edit `config_flexgen.yml`, not `pipeline.py`, when the model path or run settings change.
 
 ## What It Does
 
@@ -107,10 +115,18 @@ python pipeline.py \
 
 ## Override Model Path
 
-Only needed if your Qwen folder moves:
+Preferred: edit `paths.model` in `config_flexgen.yml`.
+
+Temporary CLI override:
 
 ```bash
 python pipeline.py --model /new/path/to/Qwen/
+```
+
+## Use Another Config File
+
+```bash
+python pipeline.py --config my_flexgen_config.yml
 ```
 
 ## Output Files
@@ -128,4 +144,3 @@ If `--run-inference` is used, it also writes:
 ```text
 experiments/results/qwen_inference_<timestamp>.json
 ```
-

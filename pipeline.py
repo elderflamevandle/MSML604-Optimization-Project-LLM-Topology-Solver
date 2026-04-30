@@ -9,11 +9,15 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-ROOT = Path(__file__).resolve().parent
-DEFAULT_QWEN_MODEL = (
-    "/home/cbagul07/MSML604/"
-    "MSML604-Optimization-Project-LLM-Topology-Solver/models/Qwen/"
+from src.flexgen.config_file import (
+    load_flexgen_config,
+    override,
+    require_section,
+    require_value,
+    resolve_repo_path,
 )
+
+ROOT = Path(__file__).resolve().parent
 
 
 @dataclass(frozen=True)
@@ -137,34 +141,77 @@ def main() -> None:
     parser = argparse.ArgumentParser(
         description="One-command FlexGen pipeline: tests, policy search, 14 parameters, optional Qwen inference."
     )
-    parser.add_argument("--model", default=DEFAULT_QWEN_MODEL,
+    parser.add_argument("--config", default="config_flexgen.yml",
+                        help="YAML config file containing model path, test settings, and run parameters.")
+    parser.add_argument("--model", default=None,
                         help="HuggingFace model id or local Qwen folder.")
-    parser.add_argument("--workload", default=str(ROOT / "configs" / "workload.yaml"))
-    parser.add_argument("--output-dir", default=str(ROOT / "experiments" / "results"))
-    parser.add_argument("--log-dir", default=str(ROOT / "experiments" / "logs"))
-    parser.add_argument("--cache-dir", default=str(ROOT / "configs" / "system_calibration"))
-    parser.add_argument("--test-target", default="tests/flexgen")
-    parser.add_argument("--skip-tests", action="store_true")
-    parser.add_argument("--test-verbose", action="store_true")
-    parser.add_argument("--recalibrate", action="store_true")
-    parser.add_argument("--verbose", action="store_true")
+    parser.add_argument("--workload", default=None)
+    parser.add_argument("--output-dir", default=None)
+    parser.add_argument("--log-dir", default=None)
+    parser.add_argument("--cache-dir", default=None)
+    parser.add_argument("--test-target", default=None)
+    parser.add_argument("--skip-tests", action="store_true", default=None)
+    parser.add_argument("--test-verbose", action="store_true", default=None)
+    parser.add_argument("--recalibrate", action="store_true", default=None)
+    parser.add_argument("--verbose", action="store_true", default=None)
 
-    parser.add_argument("--run-inference", action="store_true",
+    parser.add_argument("--run-inference", action="store_true", default=None,
                         help="Also load Qwen and generate text after policy search.")
-    parser.add_argument("--prompt", default="Explain FlexGen in simple terms.")
-    parser.add_argument("--max-new-tokens", type=int, default=80)
-    parser.add_argument("--device", default="auto", choices=["auto", "cuda", "cpu"])
+    parser.add_argument("--prompt", default=None)
+    parser.add_argument("--max-new-tokens", type=int, default=None)
+    parser.add_argument("--device", default=None, choices=["auto", "cuda", "cpu"])
     parser.add_argument("--device-map", default=None)
-    parser.add_argument("--dtype", default="auto",
+    parser.add_argument("--dtype", default=None,
                         choices=["auto", "float16", "fp16", "bfloat16", "bf16", "float32", "fp32"])
     args = parser.parse_args()
+
+    config_path = resolve_repo_path(args.config, ROOT)
+    config = load_flexgen_config(config_path)
+    paths_cfg = require_section(config, "paths")
+    tests_cfg = require_section(config, "tests")
+    flexgen_cfg = require_section(config, "flexgen")
+    inference_cfg = require_section(config, "inference")
+
+    args.model = override(require_value(paths_cfg, "model", "paths"), args.model)
+    args.workload = resolve_repo_path(
+        override(require_value(paths_cfg, "workload", "paths"), args.workload),
+        ROOT,
+    )
+    args.output_dir = resolve_repo_path(
+        override(require_value(paths_cfg, "output_dir", "paths"), args.output_dir),
+        ROOT,
+    )
+    args.log_dir = resolve_repo_path(
+        override(require_value(paths_cfg, "log_dir", "paths"), args.log_dir),
+        ROOT,
+    )
+    args.cache_dir = resolve_repo_path(
+        override(require_value(paths_cfg, "cache_dir", "paths"), args.cache_dir),
+        ROOT,
+    )
+    args.test_target = override(require_value(tests_cfg, "target", "tests"), args.test_target)
+    args.skip_tests = override(bool(tests_cfg.get("skip", False)), args.skip_tests)
+    test_quiet = bool(tests_cfg.get("quiet", True))
+    if args.test_verbose:
+        test_quiet = False
+    args.recalibrate = override(bool(flexgen_cfg.get("recalibrate", False)), args.recalibrate)
+    args.verbose = override(bool(flexgen_cfg.get("verbose", False)), args.verbose)
+    args.run_inference = override(bool(inference_cfg.get("enabled", False)), args.run_inference)
+    args.prompt = override(require_value(inference_cfg, "prompt", "inference"), args.prompt)
+    args.max_new_tokens = int(override(
+        require_value(inference_cfg, "max_new_tokens", "inference"),
+        args.max_new_tokens,
+    ))
+    args.device = override(require_value(inference_cfg, "device", "inference"), args.device)
+    args.device_map = override(inference_cfg.get("device_map"), args.device_map)
+    args.dtype = override(require_value(inference_cfg, "dtype", "inference"), args.dtype)
 
     if args.skip_tests:
         tests = PipelineTestRun(command=[], returncode=0, skipped=True)
         print("Skipping FlexGen tests.")
     else:
         print(f"Running FlexGen tests: {args.test_target}")
-        tests = run_flexgen_tests(args.test_target, quiet=not args.test_verbose)
+        tests = run_flexgen_tests(args.test_target, quiet=test_quiet)
         if tests.returncode != 0:
             print(f"\nFlexGen tests failed with return code {tests.returncode}. Stopping.")
             sys.exit(tests.returncode)

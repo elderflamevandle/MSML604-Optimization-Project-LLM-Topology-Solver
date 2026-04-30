@@ -289,6 +289,18 @@ python experiments/run_flexgen.py \
   --verbose
 ```
 
+For the one-command pipeline, the same path is stored in:
+
+```text
+config_flexgen.yml
+```
+
+Run:
+
+```bash
+python pipeline.py
+```
+
 ## Troubleshooting
 
 If CUDA is false:

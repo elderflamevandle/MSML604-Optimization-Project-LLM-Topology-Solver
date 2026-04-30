@@ -10,6 +10,14 @@ local_flexgen_test.py
 
 It runs the same FlexGen policy search, but uses synthetic model/system parameters that you pass through the CLI.
 
+The default values live in:
+
+```text
+config_flexgen.yml
+```
+
+Edit the `local_synthetic` section there instead of editing Python code.
+
 ## Basic Command
 
 ```bash
@@ -58,6 +66,10 @@ It only uses numeric parameters.
 
 ## Common Local Test
 
+Preferred: edit `local_synthetic.system` and `local_synthetic.workload` in `config_flexgen.yml`.
+
+Temporary CLI override:
+
 ```bash
 python local_flexgen_test.py \
   --gpu-vram-gb 16 \
@@ -69,7 +81,7 @@ python local_flexgen_test.py \
 
 ## Qwen-Like Model Parameters
 
-Defaults are Qwen2-1.5B-like:
+The configured defaults are Qwen2-1.5B-like:
 
 ```text
 num_layers: 28
@@ -81,7 +93,9 @@ vocab_size: 151936
 dtype_bytes: 2
 ```
 
-Override them if needed:
+Preferred: edit `local_synthetic.model` in `config_flexgen.yml`.
+
+Temporary CLI override:
 
 ```bash
 python local_flexgen_test.py \
@@ -106,3 +120,8 @@ python local_flexgen_test.py \
   --tflops-int4 240
 ```
 
+## Use Another Config File
+
+```bash
+python local_flexgen_test.py --config my_flexgen_config.yml
+```

@@ -1,0 +1,54 @@
+# Central FlexGen configuration.
+# Edit this file instead of editing pipeline.py or local_flexgen_test.py.
+
+paths:
+  model: /home/cbagul07/MSML604/MSML604-Optimization-Project-LLM-Topology-Solver/models/Qwen/
+  workload: configs/workload.yaml
+  output_dir: experiments/results
+  log_dir: experiments/logs
+  cache_dir: configs/system_calibration
+
+tests:
+  target: tests/flexgen
+  skip: false
+  quiet: true
+
+flexgen:
+  recalibrate: false
+  verbose: false
+
+inference:
+  enabled: false
+  prompt: Explain FlexGen in simple terms.
+  max_new_tokens: 80
+  device: auto
+  device_map:
+  dtype: auto
+
+local_synthetic:
+  top_k: 20
+
+  model:
+    name: synthetic-qwen2-1.5b
+    num_layers: 28
+    hidden_dim: 1536
+    num_heads: 12
+    num_kv_heads: 2
+    intermediate_size: 8960
+    vocab_size: 151936
+    dtype_bytes: 2
+
+  system:
+    gpu_vram_gb: 24.0
+    ram_gb: 128.0
+    disk_gb: 1000.0
+    pcie_bw_gbs: 24.0
+    disk_bw_gbs: 3.0
+    tflops_fp16: 80.0
+    tflops_int8: 160.0
+    tflops_int4: 240.0
+
+  workload:
+    prompt_len: 512
+    decode_len: 128
+

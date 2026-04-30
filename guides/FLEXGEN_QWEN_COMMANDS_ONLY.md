@@ -10,6 +10,12 @@ This runs FlexGen tests, runs the optimizer on your local Qwen folder, prints th
 python pipeline.py
 ```
 
+Settings come from:
+
+```bash
+config_flexgen.yml
+```
+
 With actual Qwen text generation too:
 
 ```bash
@@ -23,6 +29,8 @@ This is for your laptop/local machine. It does not load Qwen, does not call Hugg
 ```bash
 python local_flexgen_test.py
 ```
+
+Synthetic values come from `config_flexgen.yml`.
 
 Change synthetic parameters:
 
