@@ -1,0 +1,233 @@
+{
+  "timestamp": "2026-04-30T02:28:25.902781+00:00",
+  "model_id": "models/tinyllama-1.1b-chat",
+  "comparison_method": "Baselines use the same cost model. Fixed-discrete baselines still solve the inner placement LP, but they do not run the full outer policy search.",
+  "optimized": {
+    "policy": {
+      "gpu_batch_size": 1,
+      "num_gpu_batches": 8,
+      "block_size": 8,
+      "compression": "int4",
+      "cpu_compute_delegate": false,
+      "overlap_io_compute": true,
+      "weights": {
+        "gpu": 1.0,
+        "cpu": 0.0,
+        "disk": 0.0
+      },
+      "kv_cache": {
+        "gpu": 1.0,
+        "cpu": 0.0,
+        "disk": 0.0
+      },
+      "activations": {
+        "gpu": 1.0,
+        "cpu": 0.0,
+        "disk": 0.0
+      },
+      "per_token_latency_ms": 12.6216
+    },
+    "objective": {
+      "per_token_latency_ms": 12.6216,
+      "throughput_tok_s": 79.2292,
+      "t_block_ms": 100.9728
+    }
+  },
+  "best_baseline_name": "lp_fixed_int4_b1_overlap",
+  "optimized_vs_best_baseline": {
+    "latency_ratio_best_baseline_over_optimized": 1.0,
+    "optimized_latency_reduction_pct": 0.0
+  },
+  "baselines": [
+    {
+      "name": "manual_all_gpu_fp16_b1_no_overlap",
+      "description": "Naive manual baseline: batch 1, fp16, no overlap, everything on GPU.",
+      "type": "manual_fixed_placement",
+      "status": "Optimal",
+      "policy": {
+        "gpu_batch_size": 1,
+        "num_gpu_batches": 1,
+        "block_size": 1,
+        "compression": "fp16",
+        "cpu_compute_delegate": false,
+        "overlap_io_compute": false,
+        "weights": {
+          "gpu": 1,
+          "cpu": 0,
+          "disk": 0
+        },
+        "kv_cache": {
+          "gpu": 1,
+          "cpu": 0,
+          "disk": 0
+        },
+        "activations": {
+          "gpu": 1,
+          "cpu": 0,
+          "disk": 0
+        }
+      },
+      "objective": {
+        "per_token_latency_ms": 49.0392,
+        "throughput_tok_s": 20.3919,
+        "t_block_ms": 49.0392
+      },
+      "vs_optimized": {
+        "latency_ratio_baseline_over_optimized": 3.8853,
+        "optimized_latency_reduction_pct": 74.26
+      }
+    },
+    {
+      "name": "lp_fixed_fp16_b1_no_overlap",
+      "description": "Only optimize placement; keep batch 1, fp16, no CPU delegation, no I/O-compute overlap.",
+      "type": "fixed_discrete_lp_placement",
+      "status": "Optimal",
+      "policy": {
+        "gpu_batch_size": 1,
+        "num_gpu_batches": 1,
+        "block_size": 1,
+        "compression": "fp16",
+        "cpu_compute_delegate": false,
+        "overlap_io_compute": false,
+        "weights": {
+          "gpu": 1.0,
+          "cpu": 0.0,
+          "disk": 0.0
+        },
+        "kv_cache": {
+          "gpu": 1.0,
+          "cpu": 0.0,
+          "disk": 0.0
+        },
+        "activations": {
+          "gpu": 1.0,
+          "cpu": 0.0,
+          "disk": 0.0
+        }
+      },
+      "objective": {
+        "per_token_latency_ms": 49.0392,
+        "throughput_tok_s": 20.3919,
+        "t_block_ms": 49.0392
+      },
+      "vs_optimized": {
+        "latency_ratio_baseline_over_optimized": 3.8853,
+        "optimized_latency_reduction_pct": 74.26
+      }
+    },
+    {
+      "name": "lp_fixed_fp16_b1_overlap",
+      "description": "Only optimize placement; keep batch 1 and fp16, but allow overlap.",
+      "type": "fixed_discrete_lp_placement",
+      "status": "Optimal",
+      "policy": {
+        "gpu_batch_size": 1,
+        "num_gpu_batches": 1,
+        "block_size": 1,
+        "compression": "fp16",
+        "cpu_compute_delegate": false,
+        "overlap_io_compute": true,
+        "weights": {
+          "gpu": 1.0,
+          "cpu": 0.0,
+          "disk": 0.0
+        },
+        "kv_cache": {
+          "gpu": 1.0,
+          "cpu": 0.0,
+          "disk": 0.0
+        },
+        "activations": {
+          "gpu": 1.0,
+          "cpu": 0.0,
+          "disk": 0.0
+        }
+      },
+      "objective": {
+        "per_token_latency_ms": 49.0392,
+        "throughput_tok_s": 20.3919,
+        "t_block_ms": 49.0392
+      },
+      "vs_optimized": {
+        "latency_ratio_baseline_over_optimized": 3.8853,
+        "optimized_latency_reduction_pct": 74.26
+      }
+    },
+    {
+      "name": "lp_fixed_int4_b1_overlap",
+      "description": "Only optimize placement; allow int4 and overlap, but keep batch 1.",
+      "type": "fixed_discrete_lp_placement",
+      "status": "Optimal",
+      "policy": {
+        "gpu_batch_size": 1,
+        "num_gpu_batches": 1,
+        "block_size": 1,
+        "compression": "int4",
+        "cpu_compute_delegate": false,
+        "overlap_io_compute": true,
+        "weights": {
+          "gpu": 1.0,
+          "cpu": 0.0,
+          "disk": 0.0
+        },
+        "kv_cache": {
+          "gpu": 1.0,
+          "cpu": 0.0,
+          "disk": 0.0
+        },
+        "activations": {
+          "gpu": 1.0,
+          "cpu": 0.0,
+          "disk": 0.0
+        }
+      },
+      "objective": {
+        "per_token_latency_ms": 12.6216,
+        "throughput_tok_s": 79.2292,
+        "t_block_ms": 12.6216
+      },
+      "vs_optimized": {
+        "latency_ratio_baseline_over_optimized": 1.0,
+        "optimized_latency_reduction_pct": 0.0
+      }
+    },
+    {
+      "name": "lp_fixed_int4_b8_overlap",
+      "description": "Only optimize placement; allow int4 and overlap with a manually chosen batch 8.",
+      "type": "fixed_discrete_lp_placement",
+      "status": "Optimal",
+      "policy": {
+        "gpu_batch_size": 8,
+        "num_gpu_batches": 1,
+        "block_size": 8,
+        "compression": "int4",
+        "cpu_compute_delegate": false,
+        "overlap_io_compute": true,
+        "weights": {
+          "gpu": 1.0,
+          "cpu": 0.0,
+          "disk": 0.0
+        },
+        "kv_cache": {
+          "gpu": 1.0,
+          "cpu": 0.0,
+          "disk": 0.0
+        },
+        "activations": {
+          "gpu": 1.0,
+          "cpu": 0.0,
+          "disk": 0.0
+        }
+      },
+      "objective": {
+        "per_token_latency_ms": 12.6216,
+        "throughput_tok_s": 79.2292,
+        "t_block_ms": 100.9728
+      },
+      "vs_optimized": {
+        "latency_ratio_baseline_over_optimized": 1.0,
+        "optimized_latency_reduction_pct": 0.0
+      }
+    }
+  ]
+}

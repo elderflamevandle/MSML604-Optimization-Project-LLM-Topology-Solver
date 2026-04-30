@@ -34,6 +34,8 @@ def main() -> None:
     parser.add_argument("--device", default="auto", choices=["auto", "cuda", "cpu"])
     parser.add_argument("--device-map", default=None,
                         help="Optional Transformers device_map, e.g. 'auto' for multi-GPU/offload setups.")
+    parser.add_argument("--no-chat-template", action="store_true",
+                        help="Disable tokenizer chat-template formatting.")
     parser.add_argument("--output-dir", default=str(ROOT / "experiments" / "results"))
     args = parser.parse_args()
 
@@ -46,6 +48,7 @@ def main() -> None:
         dtype=args.dtype,
         device=args.device,
         device_map=args.device_map,
+        use_chat_template=not args.no_chat_template,
     ))
     out_path = write_inference_result(result, args.output_dir)
 
@@ -64,4 +67,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

@@ -20,6 +20,7 @@ class InferenceConfig:
     device: str = "auto"
     device_map: str | None = None
     trust_remote_code: bool = True
+    use_chat_template: bool = True
 
 
 @dataclass(frozen=True)
@@ -101,7 +102,15 @@ def run_qwen_inference(config: InferenceConfig) -> InferenceResult:
         model = model.to(device)
     model.eval()
 
-    inputs = tokenizer(config.prompt, return_tensors="pt")
+    prompt_text = config.prompt
+    if config.use_chat_template and getattr(tokenizer, "chat_template", None):
+        prompt_text = tokenizer.apply_chat_template(
+            [{"role": "user", "content": config.prompt}],
+            tokenize=False,
+            add_generation_prompt=True,
+        )
+
+    inputs = tokenizer(prompt_text, return_tensors="pt")
     input_device = getattr(model, "device", torch.device(device))
     inputs = _move_inputs(inputs, str(input_device))
     prompt_tokens = int(inputs["input_ids"].shape[-1])
@@ -152,4 +161,3 @@ def write_inference_result(result: InferenceResult, output_dir: str) -> str:
     path = Path(output_dir) / f"qwen_inference_{ts}.json"
     path.write_text(json.dumps(result.to_json(), indent=2), encoding="utf-8")
     return str(path)
-

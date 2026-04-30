@@ -1,0 +1,55 @@
+# Local GPU 1B-class model config.
+# Uses TinyLlama 1.1B Chat from models/tinyllama-1.1b-chat.
+
+paths:
+  model: models/tinyllama-1.1b-chat
+  workload: configs/workload.yaml
+  output_dir: experiments/results
+  baseline_dir: experiments/baseline_comparisons
+  log_dir: experiments/logs
+  cache_dir: configs/system_calibration
+
+tests:
+  target: tests/flexgen
+  skip: false
+  quiet: true
+
+flexgen:
+  recalibrate: false
+  verbose: false
+
+inference:
+  enabled: true
+  prompt: Explain GPU memory offloading for LLM inference in two sentences.
+  max_new_tokens: 50
+  device: cuda
+  device_map:
+  dtype: auto
+
+local_synthetic:
+  top_k: 20
+
+  model:
+    name: synthetic-tinyllama-1.1b-chat
+    num_layers: 22
+    hidden_dim: 2048
+    num_heads: 32
+    num_kv_heads: 4
+    intermediate_size: 5632
+    vocab_size: 32000
+    dtype_bytes: 2
+
+  system:
+    gpu_vram_gb: 6.0
+    ram_gb: 16.0
+    disk_gb: 500.0
+    pcie_bw_gbs: 12.0
+    disk_bw_gbs: 2.0
+    tflops_fp16: 20.0
+    tflops_int8: 40.0
+    tflops_int4: 80.0
+
+  workload:
+    prompt_len: 256
+    decode_len: 64
+

@@ -14,6 +14,7 @@ from src.flexgen.qwen_inference import (
 
 class _FakeTokenizer:
     eos_token_id = 0
+    chat_template = None
 
     def __call__(self, prompt, return_tensors):
         assert return_tensors == "pt"
@@ -96,4 +97,3 @@ def run_qwen_inference_with_static_result():
         latency_s=0.1,
         tokens_per_s=10.0,
     )
-
