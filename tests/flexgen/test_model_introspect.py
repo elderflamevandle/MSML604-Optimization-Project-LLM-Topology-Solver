@@ -30,6 +30,19 @@ def test_load_model_spec_parses_llama3_config(tmp_path):
     assert spec.dtype_bytes == 2
 
 
+def test_load_model_spec_accepts_local_model_folder(tmp_path):
+    cfg_path = tmp_path / "config.json"
+    cfg_path.write_text(json.dumps(LLAMA3_8B_CONFIG))
+
+    with patch("src.flexgen.model_introspect.snapshot_download") as mock_download:
+        spec = load_model_spec(str(tmp_path))
+
+    mock_download.assert_not_called()
+    assert spec.hf_id == str(tmp_path)
+    assert spec.num_layers == 32
+    assert spec.hidden_dim == 4096
+
+
 def test_load_model_spec_falls_back_to_num_heads_when_no_gqa(tmp_path):
     cfg = dict(LLAMA3_8B_CONFIG)
     del cfg["num_key_value_heads"]

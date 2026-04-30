@@ -27,8 +27,20 @@ _DTYPE_BYTES = {"float16": 2, "bfloat16": 2, "float32": 4, "int8": 1, "int4": 1}
 
 
 def load_model_spec(hf_id: str) -> ModelSpec:
-    local_dir = snapshot_download(repo_id=hf_id, allow_patterns=["config.json"])
-    cfg = json.loads((Path(local_dir) / "config.json").read_text())
+    model_path = Path(hf_id).expanduser()
+    if model_path.exists():
+        config_path = model_path / "config.json"
+        if not config_path.exists():
+            raise FileNotFoundError(
+                f"Local model path exists but has no config.json: {model_path}"
+            )
+        local_dir = model_path
+        logger.info("Loaded model config from local path: %s", config_path)
+    else:
+        local_dir = Path(snapshot_download(repo_id=hf_id, allow_patterns=["config.json"]))
+        logger.info("Loaded model config from HuggingFace repo: %s", hf_id)
+
+    cfg = json.loads((local_dir / "config.json").read_text())
 
     num_heads = cfg["num_attention_heads"]
     num_kv_heads = cfg.get("num_key_value_heads", num_heads)
