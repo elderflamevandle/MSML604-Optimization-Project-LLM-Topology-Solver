@@ -13,3 +13,4 @@ CLAUDE.md
 .venv/
 venv312/
 models/*
+.worktrees/
