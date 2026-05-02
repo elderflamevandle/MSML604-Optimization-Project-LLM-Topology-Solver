@@ -77,7 +77,41 @@ weakness in the FlexGen paper, (ii) it gives you a clean convex-opt formulation
 policy that's robust to ±50% workload variation, FlexGen's optimum is X% slower
 under shifted workloads."
 
-### Decision
+## Q2 — Are we already comparing different optimizers in the repo?
 
-_Pending — awaiting user direction on math-vs-empirical preference and whether to
-combine._
+**Finding:** No. Two existing comparisons, neither is "different optimizers on the same
+FlexGen problem":
+
+1. **`src/flexgen/baseline_compare.py`** — compares the LP-optimized policy against
+   5 hand-picked baseline policies (`manual_all_gpu_fp16_b1_no_overlap`,
+   `lp_fixed_*`). Same PuLP solver, same cost model, only the fixed enumeration
+   varies. This is "we beat the heuristic", not optimizer comparison.
+2. **`run_all.py`** — runs FlexGen (LP) + Helix (MILP) + Vidur (Bayesian opt). But
+   these solve three *different* problems, not the same problem with different
+   optimizers.
+
+So multi-optimizer comparison on the FlexGen problem is a real gap.
+
+## Decision
+
+User picked **option (ii) — clean convex formulation + tangible result + real novelty**.
+Plan has three layers:
+
+- **Layer 1 — Math novelty:** Per-layer (non-uniform) placement LP. Strictly
+  generalizes FlexGen. 9·L vars instead of 9, still convex, still seconds to solve.
+- **Layer 2 — Optimizer comparison (headline novelty):** Solve the same
+  per-layer FlexGen problem with five techniques and compare wall time + solution
+  quality:
+    - **O1**: Outer enumeration × inner LP (current FlexGen, PuLP). Baseline.
+    - **O2**: Pure LP relaxation + rounding. Demonstrates relaxation gap.
+    - **O3**: MILP one-shot via Pyomo + CBC, big-M joins outer choice with
+      placement LP. Demonstrates why decomposition wins.
+    - **O4**: Direct convex program in CVXPY (DCP grammar with native `max()` for
+      overlap). Course-style elegance demo.
+    - **O5**: Bayesian Optimization (Optuna, TPE) over outer + LP inner. Mirrors
+      the repo's Vidur module. Demonstrates surrogate-model search.
+- **Layer 3 — Empirical validation:** Use existing `src/flexgen/qwen_inference.py`
+  to run real TinyLlama inference under the LP-recommended policy and a naive
+  policy on RTX 4050; measure ms/token; compare to predicted.
+
+Spec to be written at `docs/superpowers/specs/2026-05-02-flexgen-optimizer-comparison-design.md`.
