@@ -104,11 +104,10 @@ must appear as outputs.
 **Options presented:**
 - A. Hardcoded defaults in code (prompt=512, decode=128, concurrency=1).
 - B. YAML at `configs/workload.yaml` with sensible defaults; CLI override.
-- C. Trace-driven — sample distributions from `data/sharegpt_vicuna/` or
-  `data/vidur_traces/`. Most realistic.
+- C. Trace-driven — sample distributions from `data/sharegpt_vicuna/`. Most realistic.
 
 **Recommendation given:** B for the 5-day window, with `--workload` flag accepting
-`sharegpt` / `vidur` as future built-in presets (Option C-as-extension).
+`sharegpt` as a future built-in preset (Option C-as-extension).
 
 **User decision:** **B** for this iteration. **C kept on the recommendations / future-work
 list** in the design doc.

@@ -359,7 +359,7 @@ Existing files **unchanged**: `lp_formulation.py`, `policy_search.py`,
 | `cvxpy` | O4 — DCP grammar |
 | `pyomo` | O3 — MILP modeling |
 | `coincbc` (or system CBC) | O3 — MILP solver |
-| `optuna` | O5 — Bayesian Optimization (already in `requirements.txt` for Vidur — no new add) |
+| `optuna` | O5 — Bayesian Optimization (already in `requirements.txt` — no new add) |
 
 To be added to `requirements.txt`:
 
@@ -452,7 +452,6 @@ For each model in {TinyLlama-1.1B, Qwen2-1.5B, Mistral-7B}:
 - Multi-objective / Pareto front (latency × energy × memory).
 - Mixed-precision per-tensor quantization.
 - Genetic Algorithm / Simulated Annealing optimizers (would be O6/O7 if added).
-- Helix / Vidur integration with the same comparison framework.
 - Trace-driven workload sampling.
 
 These are all viable extensions but would each warrant their own design spec.

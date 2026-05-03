@@ -93,9 +93,8 @@ derived, not a free variable.)
   `prompt_len` and `decode_len`. This matches the FlexGen paper's offline-batched model
   (uniform sequence length within a batch). Heterogeneous lengths are future work
   (the trace-driven option below).
-- **Future (not this iteration):** `--workload sharegpt` / `--workload vidur` to sample
-  distributions from `data/sharegpt_vicuna/` and `data/vidur_traces/`. Code paths reserved
-  but not implemented.
+- **Future (not this iteration):** `--workload sharegpt` to sample distributions from
+  `data/sharegpt_vicuna/`. Code paths reserved but not implemented.
 
 ## 4. Cost model
 
@@ -311,12 +310,11 @@ python experiments/run_flexgen.py \
 - **C — Full FlexGen runtime.** Actually execute the policy: download weights, implement
   weight streaming, KV management, CPU-delegated attention kernel. Validate the
   optimizer's predicted latency against measured. Multi-week.
-- **C — Trace-driven workload.** `--workload sharegpt` / `--workload vidur` reads real
-  prompt/decode distributions from the existing `data/` directories instead of fixed YAML.
-  Optimizer changes from a single objective to expected-value-over-distribution.
-- **Multi-GPU extension.** The current Helix module already covers multi-GPU pipeline
-  routing; a future integration could pipe the FlexGen single-node policy as the per-stage
-  configuration for a multi-stage Helix plan.
+- **C — Trace-driven workload.** `--workload sharegpt` reads real prompt/decode
+  distributions from `data/sharegpt_vicuna/` instead of fixed YAML. Optimizer changes
+  from a single objective to expected-value-over-distribution.
+- **Multi-GPU extension.** Pipe the FlexGen single-node policy as the per-stage
+  configuration for a multi-GPU pipeline plan.
 
 ## 12. Risks / open questions
 

@@ -43,8 +43,7 @@ to add for the final deliverable / what alternate optimizer to compare against.
 **Experimental / comparison novelty:**
 
 - **C. Bayesian Optimization (Optuna) over outer + LP inner — vs. full enumeration**
-  — direct apples-to-apples speedup measurement. Mirrors what the project's Vidur
-  module already does for system configs. Easy lift, clean comparison story.
+  — direct apples-to-apples speedup measurement. Easy lift, clean comparison story.
 
 - **E. MINLP (Pyomo + Bonmin/Couenne) one-shot, all 14 variables jointly** —
   monolithic vs. decomposed. Tells the professor "we tried solving the whole thing
@@ -86,9 +85,7 @@ FlexGen problem":
    5 hand-picked baseline policies (`manual_all_gpu_fp16_b1_no_overlap`,
    `lp_fixed_*`). Same PuLP solver, same cost model, only the fixed enumeration
    varies. This is "we beat the heuristic", not optimizer comparison.
-2. **`run_all.py`** — runs FlexGen (LP) + Helix (MILP) + Vidur (Bayesian opt). But
-   these solve three *different* problems, not the same problem with different
-   optimizers.
+2. **`run_all.py`** — runs the FlexGen policy search. Not a multi-optimizer comparison.
 
 So multi-optimizer comparison on the FlexGen problem is a real gap.
 
@@ -108,8 +105,7 @@ Plan has three layers:
       placement LP. Demonstrates why decomposition wins.
     - **O4**: Direct convex program in CVXPY (DCP grammar with native `max()` for
       overlap). Course-style elegance demo.
-    - **O5**: Bayesian Optimization (Optuna, TPE) over outer + LP inner. Mirrors
-      the repo's Vidur module. Demonstrates surrogate-model search.
+    - **O5**: Bayesian Optimization (Optuna, TPE) over outer + LP inner. Demonstrates surrogate-model search.
 - **Layer 3 — Empirical validation:** Use existing `src/flexgen/qwen_inference.py`
   to run real TinyLlama inference under the LP-recommended policy and a naive
   policy on RTX 4050; measure ms/token; compare to predicted.

@@ -136,8 +136,6 @@ uv pip install -r requirements.txt
 
 This pulls everything else: `pulp` (LP solver), `huggingface_hub`, `pyyaml`, `psutil`, `optuna`, `transformers`, `datasets`, `matplotlib`, `pandas`, `seaborn`, `scipy`, `numpy`, `pytest`.
 
-> **Note**: `vllm` is in `requirements.txt` for the existing Vidur module. If `vllm` install fails on your platform, you can comment it out — the FlexGen-faithful pipeline does not use it.
-
 ---
 
 ## 7. Step 5 — Verify the install
