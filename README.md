@@ -52,7 +52,134 @@ python run_all.py
 
 ---
 
-## CLI flags
+## pipeline.py — one-command full pipeline
+
+`pipeline.py` is the recommended entry point for GPU runs. It chains four steps in one command:
+
+1. Runs the full FlexGen test suite (`pytest tests/flexgen`)
+2. Runs the policy search (`experiments/run_flexgen.py`)
+3. Builds a baseline-vs-optimized comparison and prints it to the terminal
+4. Optionally loads the model and runs actual inference
+
+All settings come from a YAML config file. Edit the config — not `pipeline.py` — when paths or defaults change.
+
+### Minimal run (reads `config_flexgen.yml`)
+
+```bash
+python pipeline.py
+```
+
+### Local GPU with a small downloaded model
+
+Uses `config_flexgen_local_gpu.yml` which points to `models/smollm2-135m-instruct/` and enables inference on CUDA:
+
+```bash
+python pipeline.py --config config_flexgen_local_gpu.yml
+```
+
+### HPC / remote GPU server (Qwen model)
+
+```bash
+python pipeline.py --config config_flexgen.yml
+```
+
+The default `config_flexgen.yml` sets `paths.model` to the server Qwen path. Override it temporarily:
+
+```bash
+python pipeline.py --model /path/to/your/Qwen/
+```
+
+### Run with GPU inference
+
+After the policy search, load the model and generate text on CUDA:
+
+```bash
+python pipeline.py \
+  --run-inference \
+  --device cuda \
+  --prompt "Explain GPU memory offloading for LLM inference in two sentences." \
+  --max-new-tokens 80
+```
+
+Multi-GPU (Transformers `device_map="auto"`):
+
+```bash
+python pipeline.py \
+  --run-inference \
+  --device cuda \
+  --device-map auto \
+  --prompt "Explain FlexGen in simple terms." \
+  --max-new-tokens 80
+```
+
+### Run all tests + full report
+
+```bash
+python pipeline.py --detailed-report
+```
+
+Prints all 14 policy parameters, full model/system inputs, and the top-20 candidate table.
+
+### Verbose optimizer logs
+
+```bash
+python pipeline.py --verbose
+```
+
+### Force hardware recalibration
+
+```bash
+python pipeline.py --recalibrate --verbose
+```
+
+### Skip tests (re-use previous test result)
+
+```bash
+python pipeline.py --skip-tests
+```
+
+### Run only the test suite standalone
+
+```bash
+pytest tests/flexgen/ -v
+```
+
+### pipeline.py CLI flags
+
+| Flag | Default | Description |
+|---|---|---|
+| `--config <yml>` | `config_flexgen.yml` | YAML config file |
+| `--model <path\|hf_id>` | from config | Local folder or HuggingFace id |
+| `--workload <yaml>` | from config | Workload spec (prompt/decode lengths) |
+| `--skip-tests` | off | Skip pytest and go straight to policy search |
+| `--test-verbose` | off | Show per-test output instead of quiet summary |
+| `--recalibrate` | off | Force re-benchmark hardware |
+| `--verbose` | off | DEBUG-level optimizer output |
+| `--detailed-report` | off | Print 14 parameters + top-k candidates |
+| `--run-inference` | off | Load model and generate text after search |
+| `--prompt <str>` | from config | Prompt for inference |
+| `--max-new-tokens <int>` | from config | Tokens to generate |
+| `--device <str>` | from config | `cuda`, `cpu`, or `auto` |
+| `--device-map <str>` | from config | Transformers `device_map` (e.g. `auto`) |
+| `--dtype <str>` | from config | `float16`, `bfloat16`, `float32`, or `auto` |
+| `--output-dir <dir>` | from config | Result JSON directory |
+| `--baseline-dir <dir>` | from config | Baseline comparison JSON directory |
+| `--log-dir <dir>` | from config | Log file directory |
+| `--cache-dir <dir>` | from config | Calibration cache directory |
+
+### Output files written by pipeline.py
+
+```
+experiments/results/flexgen_<ts>.json               — best policy + top-20 candidates
+experiments/results/flexgen_pipeline_<ts>.json      — combined pipeline summary
+experiments/baseline_comparisons/baseline_<ts>.json — baseline vs optimised comparison
+experiments/logs/flexgen_<ts>.log                   — full DEBUG log
+experiments/results/qwen_inference_<ts>.json        — inference result (if --run-inference)
+```
+
+---
+
+## CLI flags (run_flexgen.py standalone)
 
 | Flag | Default | Description |
 |---|---|---|
