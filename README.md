@@ -1,111 +1,77 @@
-# LLM-Topology-Solver 🚀
+# FlexGen Optimizer
 
-An end-to-end framework for solving the mathematical bottlenecks of Large Language Model (LLM) serving and deployment. 
-
-Serving LLMs is notoriously resource-intensive, often constrained by GPU memory and network compute bandwidth. Rather than relying on simple heuristics, this project translates the LLM infrastructure bottleneck into rigorous mathematical equations. It utilizes **Linear Programming (LP)**, **Mixed-Integer Linear Programming (MILP)**, and **Bayesian Optimization** to calculate the absolute optimal hardware placement and system configurations for maximizing token throughput and minimizing latency.
-
-## 🧠 Optimization Paradigms Implemented
-
-This project implements and compares three distinct state-of-the-art optimization architectures:
-
-### 1. FlexGen (Single-Node Memory Bottleneck)
-- **Problem**: The LLM is too large to fit in a single GPU's VRAM.
-- **Math**: Continuous Linear Programming (LP).
-- **Solution**: Formulates fractional memory placement variables across a tiered memory system (GPU $\rightarrow$ CPU $\rightarrow$ Disk). The LP solver minimizes latency penalties to ensure critical weights/KV-cache components stay on the fastest available hardware.
-
-### 2. Helix (Multi-GPU Cluster Routing)
-- **Problem**: Partitioning a model across heterogeneous GPUs with varying network bandwidths and memory capacities to maximize token flow.
-- **Math**: Mixed-Integer Linear Programming (MILP) & Network Flow Graphing.
-- **Solution**: Models the cluster as a network flow graph. Defines integer boundaries for layer chunking and binary variables for valid pipeline connections. Finds the exact network routing that maximizes end-to-end flow without violating any single GPU's constraints.
-
-### 3. Vidur (System Configuration & SLO Compliance)
-- **Problem**: Finding the absolute best system configurations (quantization, batch sizes, pipeline parallelism) to maximize Queries Per Second (QPS) without violating strict tail-latency (P99) constraints.
-- **Math**: Bayesian Optimization & Grid Search.
-- **Solution**: Uses probabilistic search (`optuna`) to intelligently navigate the configuration search space, learning from previous states to predict the optimal setup significantly faster than exhaustive grid search.
+A faithful implementation of the **FlexGen** policy search for LLM inference on memory-constrained hardware. The optimizer formulates fractional memory placement across a tiered memory hierarchy (GPU → CPU → Disk) using Linear Programming, then enumerates discrete decision variables to find the policy that minimizes per-token latency.
 
 ---
 
-## 💻 Installation
+## How it works
 
-This project uses `uv` for blazing-fast dependency resolution and virtual environment management.
+FlexGen decomposes each transformer block's latency into four components: compute, weight-load I/O, KV-cache I/O, and activation I/O. The optimizer runs a two-level search:
+
+- **Outer loop** (480 enumerated points): `gpu_batch_size`, `num_gpu_batches`, `compression`, `cpu_compute_delegate`, `overlap_io_compute`
+- **Inner LP** (9 continuous fractions): `w_g/w_c/w_d`, `c_g/c_c/c_d`, `h_g/h_c/h_d` — placement of weights, KV cache, and activations across GPU/CPU/disk
+
+With `overlap_io_compute=True`, the LP minimizes an epigraph variable `τ ≥ max(compute, I/O)` per layer. Without overlap, terms sum. The objective is `T_block / (gbs · num_gb)` — per-token latency.
+
+---
+
+## Installation
 
 ```bash
-# 1. Create a Python 3.12 virtual environment using uv
+# Python 3.12 virtual environment via uv
 uv venv --python 3.12
+.venv\Scripts\activate          # Windows
+# source .venv/bin/activate     # Mac/Linux
 
-# 2. Activate the environment (Windows)
-.venv\Scripts\activate
-# (Mac/Linux: source .venv/bin/activate)
-
-# 3. Install dependencies
 uv pip install -r requirements.txt
 ```
 
 ---
 
-## 🚀 Quick Start
-
-The project includes an end-to-end orchestrator that runs all three mathematical optimizations, plots their trade-offs, and outputs a unified deployment recommendation.
+## Quick start
 
 ```bash
-python run_all.py
-```
-
-### What happens when you run `run_all.py`?
-1. Runs the **FlexGen LP solver** to find optimal fractional placement.
-2. Runs the **Helix MILP solver** to calculate maximum multi-GPU pipeline flow.
-3. Runs the **Vidur configurations** via Bayesian Search to maximize QPS under latency constraints.
-4. Generates **comparison graphs** in the `analysis/plots/` directory.
-5. Prints a final **Deployment Recommendation** directly to your terminal.
-
----
-
-## 📊 Visual Reports & Analytics
-
-After running the pipeline, check the `analysis/plots/` folder for generated visual comparisons, including:
-- `overall_throughput_comparison.png`: Main bar chart comparing Vidur's best QPS with Helix's total multi-GPU flow.
-- `optimizer_comparison.png`: Shows the efficiency of Bayesian Search vs Grid Search.
-- `qps_vs_latency.png`: Analyzes throughput tradeoffs across `int4`, `int8`, and `fp16` quantization.
-- `memory_vs_throughput.png`: Visualizes how batch sizing impacts memory consumption.
-
----
-
-## 🧪 Running Unit Tests
-
-To validate the mathematical equations and logic constraints, you can run the comprehensive test suite using `pytest`:
-
-```bash
-pytest tests/
-```
-
----
-
-## 🛠️ FlexGen Faithful Policy Search
-
-> 📘 **For a complete step-by-step walkthrough** (clone → CUDA install → HF auth → run → inspect results → write your own tests), see **[USER-GUIDE-FLEXGEN.md](USER-GUIDE-FLEXGEN.md)**.
-
-### Quick start
-
-```bash
-# Default: Llama-3-8B with the bundled workload, on your auto-detected system
+# Default: Llama-3-8B, auto-detected system
 python experiments/run_flexgen.py
 
-# Pick any HuggingFace causal-LM
+# Any HuggingFace causal-LM
 python experiments/run_flexgen.py --model mistralai/Mistral-7B-v0.1
 
-# Force a calibration refresh (after a hardware upgrade)
+# Force hardware recalibration
 python experiments/run_flexgen.py --recalibrate
 
 # DEBUG-level console output
 python experiments/run_flexgen.py --verbose
 ```
 
-### What you get back
+Run experiments + plot in one step:
 
-Each invocation writes two files (timestamped, UTC):
+```bash
+python run_all.py
+```
 
-- `experiments/results/flexgen_<ts>.json` — best policy with all **14 decision variables**, full system + model + workload context, top-20 candidates for sensitivity analysis.
-- `experiments/logs/flexgen_<ts>.log` — DEBUG-level structured log of the entire run (machine_id, calibration values, model dimensions, search progress, final policy).
+---
+
+## CLI flags
+
+| Flag | Default | Description |
+|---|---|---|
+| `--model <hf_id>` | `meta-llama/Meta-Llama-3-8B` | Any HuggingFace causal-LM |
+| `--workload <yaml>` | `configs/workload.yaml` | Workload YAML (prompt/decode lengths) |
+| `--recalibrate` | off | Re-run hardware benchmarks even if cached |
+| `--verbose` | off | DEBUG-level output on console |
+| `--output-dir <dir>` | `experiments/results` | JSON output directory |
+| `--log-dir <dir>` | `experiments/logs` | Log file directory |
+| `--cache-dir <dir>` | `configs/system_calibration` | Calibration cache directory |
+
+---
+
+## Output
+
+Each run writes two files (timestamped UTC):
+
+- `experiments/results/flexgen_<ts>.json` — best policy (14 decision variables), full system/model/workload context, top-20 candidates for sensitivity analysis
+- `experiments/logs/flexgen_<ts>.log` — DEBUG-level structured log of the full search
 
 Sample best-policy block:
 
@@ -123,84 +89,13 @@ Sample best-policy block:
 }
 ```
 
-### CLI flags
+---
 
-| Flag | Default | What it does |
-|---|---|---|
-| `--model <hf_id>` | `meta-llama/Meta-Llama-3-8B` | Any HuggingFace causal-LM id |
-| `--workload <yaml>` | `configs/workload.yaml` | Path to workload YAML |
-| `--recalibrate` | off | Force re-running benchmarks even if cached |
-| `--verbose` | off | DEBUG-level on console (file always at DEBUG) |
-| `--output-dir <dir>` | `experiments/results` | Where the JSON lands |
-| `--log-dir <dir>` | `experiments/logs` | Where the log lands |
-| `--cache-dir <dir>` | `configs/system_calibration` | Where calibration JSON lives |
+## System probe & calibration
 
-### What changed compared to the original toy LP
+On first run, the optimizer auto-benchmarks the host (~30 s) and caches results under `configs/system_calibration/{hostname}_{gpu}.json`. Subsequent runs reuse the cache (zero overhead). Use `--recalibrate` after a hardware change.
 
-The previous `src/flexgen/lp_formulation.py` was a tiny LP that minimized an
-arbitrary "off-GPU penalty" with hardcoded model byte counts. The new pipeline:
-
-1. **Auto-detects** the host (capacities + bandwidths + compute throughput) — no hardcoded values.
-2. **Auto-introspects** any HF model from its `config.json`.
-3. **Faithfully implements** the FlexGen paper's two-level policy search: outer enumeration over (`gbs`, `num_gb`, compression, CPU-delegate, I/O–compute overlap), inner LP for the 9 placement fractions, minimizing per-token latency via the paper's actual cost model.
-
-### Running the FlexGen test suite
-
-```bash
-pytest tests/flexgen/ -v
-```
-
-Covers system probe, calibration cache, HF model introspection, cost-model property tests
-(overlap dominance, batch amortization, GQA-aware delegate cost), inner LP optimality,
-end-to-end orchestration, and plot generation.
-
-
-
-### Directories created by the toolchain
-
-- `configs/system_calibration/` — per-machine calibration cache (gitignored). First run on a new server takes ~30 s; subsequent runs reuse the cache.
-- `experiments/logs/` — per-run log files (gitignored). One file per CLI invocation.
-
-### Optimizer structure (faithful FlexGen policy search)
-
-The full search enumerates the 5 discrete decision variables and solves an inner LP for the 9 placement fractions at each enumerated point:
-
-| Outer (enumerated, 480 points total) | Inner (LP, 9 fractions) |
-|---|---|
-| `gbs ∈ {1, 2, 4, 8, 16, 32}` | `w_g, w_c, w_d` (weights placement) |
-| `num_gb ∈ {1, 2, 4, 8, 16}` | `c_g, c_c, c_d` (KV cache placement) |
-| `compression ∈ {fp16, int4}` | `h_g, h_c, h_d` (activations placement) |
-| `cpu_compute_delegate ∈ {False, True}` | |
-| `overlap_io_compute ∈ {False, True}` | |
-
-End-to-end search time on a typical box: ~30 seconds.
-
-The objective is per-token latency `T_block / (gbs · num_gb)`, where `T_block` decomposes into compute, weight-load, KV I/O, and activation I/O terms per layer. With overlap=True the LP uses an epigraph variable `τ ≥ each term` (max), with overlap=False the terms sum.
-
-### Plug any HuggingFace causal-LM
-
-The optimizer takes a HuggingFace model id and pulls only `config.json` (~4 KB — no weight download needed for the math). Architecture fields like `num_hidden_layers`, `hidden_size`, `num_attention_heads`, `num_key_value_heads` (GQA-aware), and `intermediate_size` are parsed and used to derive memory footprints analytically.
-
-Tested architectures (Llama-style with SwiGLU FFN):
-- `meta-llama/Meta-Llama-3-8B`
-- `mistralai/Mistral-7B-v0.1`
-- `Qwen/Qwen2-1.5B`
-
-For gated repos (e.g. Llama), authenticate first: `huggingface-cli login`.
-
-### Per-machine calibration
-
-The first time the FlexGen optimizer runs on a new server, it micro-benchmarks the host (~30 s):
-
-- **PCIe bandwidth** — timed pinned host→device tensor copies (or 16 GB/s fallback if no CUDA)
-- **Disk bandwidth** — timed write+read of a 200 MB probe file under `configs/system_calibration/`
-- **Compute throughput** — timed `torch.matmul` at fp16 (with int8/int4 scaled approximations)
-
-Results are cached under [`configs/system_calibration/{hostname}_{gpu_model}.json`](configs/system_calibration/), keyed per machine. Subsequent runs on the same box reuse the cache and add zero startup latency. Force a recalibration after a hardware upgrade with `--recalibrate` (CLI lands in Task 12).
-
-### Live system probe
-
-Each run reads volatile capacities directly from the host — no hardcoded values:
+Live capacity is read every run (not hardcoded):
 
 | Field | Source |
 |---|---|
@@ -208,7 +103,7 @@ Each run reads volatile capacities directly from the host — no hardcoded value
 | `ram_gb` (free) | `psutil.virtual_memory().available` |
 | `disk_gb` (free) | `psutil.disk_usage(project_root).free` |
 
-If CUDA is unavailable, `gpu_vram_gb` reports 0.0. Quick check that the probe works on your box:
+Quick check:
 
 ```bash
 python -c "from src.flexgen.system_probe import probe_live_capacity; \
@@ -216,23 +111,84 @@ python -c "from src.flexgen.system_probe import probe_live_capacity; \
            print(f'GPU={c.gpu_vram_gb:.1f}GB RAM={c.ram_gb:.1f}GB DISK={c.disk_gb:.1f}GB')"
 ```
 
-### Workload spec
+---
 
-The workload (sequence lengths) is read from a YAML file. Default at [`configs/workload.yaml`](configs/workload.yaml):
+## Workload config
+
+Default at `configs/workload.yaml`:
 
 ```yaml
-prompt_len: 512   # tokens per request (prefill phase)
-decode_len: 128   # tokens generated per request (decode phase)
+prompt_len: 512   # tokens per request (prefill)
+decode_len: 128   # tokens generated per request (decode)
 ```
 
-All sequences in a block share the same prompt / decode lengths (matches the FlexGen paper's offline-batched model). Future work: trace-driven sampling from `data/sharegpt_vicuna/` or `data/vidur_traces/`.
+---
 
-### Additional dependencies
+## Supported architectures
 
-The standard `uv pip install -r requirements.txt` now also installs:
+Tested Llama-style models with SwiGLU FFN (no weight download needed — only `config.json` is fetched):
 
-- `huggingface_hub` — fetches model `config.json`
-- `pyyaml` — workload spec parsing
-- `psutil` — live RAM / disk capacity reads
+- `meta-llama/Meta-Llama-3-8B`
+- `mistralai/Mistral-7B-v0.1`
+- `Qwen/Qwen2-1.5B`
 
-Full CLI documentation will land here as each task in [`docs/superpowers/plans/2026-04-26-flexgen-faithful.md`](docs/superpowers/plans/2026-04-26-flexgen-faithful.md) ships.
+For gated repos: `huggingface-cli login` first.
+
+Local small models (pre-downloaded, no auth required):
+
+- `models/smollm2-135m-instruct/`
+- `models/tinyllama-1.1b-chat/`
+
+---
+
+## Running tests
+
+```bash
+pytest tests/flexgen/ -v
+```
+
+Covers: system probe, calibration cache, HF model introspection, cost-model properties (overlap dominance, batch amortization, GQA-aware delegate cost), inner LP optimality, end-to-end orchestration, plot generation.
+
+---
+
+## Source layout
+
+```
+src/flexgen/
+  system_probe.py      — live GPU/RAM/disk capacity + hardware benchmarks
+  calibration.py       — calibration cache load/save
+  model_introspect.py  — HuggingFace config.json parser (any causal-LM)
+  cost_model.py        — per-layer latency cost model (paper-faithful)
+  lp_formulation.py    — inner LP (9 placement fractions, scipy linprog)
+  policy_search.py     — outer search loop (480 points × inner LP)
+  workload.py          — workload YAML loader
+  config_file.py       — YAML config loader/override helpers
+  baseline_compare.py  — baseline policy comparison utilities
+  qwen_inference.py    — Qwen model inference runner
+  __init__.py
+
+experiments/
+  run_flexgen.py       — CLI entry point
+
+analysis/
+  plot_tradeoffs.py    — throughput/latency trade-off plots
+
+configs/
+  workload.yaml        — default workload spec
+  system_calibration/  — per-machine calibration cache (gitignored)
+
+tests/flexgen/         — full test suite (pytest)
+guides/                — step-by-step runbooks
+report/                — analysis report
+```
+
+---
+
+## Guides
+
+- [USER-GUIDE-FLEXGEN.md](USER-GUIDE-FLEXGEN.md) — full walkthrough: clone → CUDA → HF auth → run → inspect results → write tests
+- [guides/LOCAL_GPU_SMALL_MODEL_TEST.md](guides/LOCAL_GPU_SMALL_MODEL_TEST.md) — local GPU test with SmoLLM2-135M
+- [guides/LOCAL_GPU_TINYLLAMA_1B_TEST.md](guides/LOCAL_GPU_TINYLLAMA_1B_TEST.md) — local GPU test with TinyLLaMA-1.1B
+- [guides/LOCAL_SYNTHETIC_FLEXGEN_TEST.md](guides/LOCAL_SYNTHETIC_FLEXGEN_TEST.md) — synthetic (no-model) local test
+- [guides/PIPELINE_ONE_COMMAND.md](guides/PIPELINE_ONE_COMMAND.md) — single-command pipeline reference
+- [guides/FLEXGEN_PLUS_CONVEX_OPTIMIZATION_COMPARISON.md](guides/FLEXGEN_PLUS_CONVEX_OPTIMIZATION_COMPARISON.md) — LP formulation deep-dive
