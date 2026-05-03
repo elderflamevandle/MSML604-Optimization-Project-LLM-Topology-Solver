@@ -139,11 +139,14 @@ def solve_inner_lp(
         wlpl_gb = _weights_per_layer_bytes(spec, enum.q) / GB
         return wlpl_gb * (w_c / pcie + w_d / disk_eff)
 
-    def _kv_term(seq_len: int):
+    def _kv_term(seq_len: int, q_tokens: int | None = None):
         kv_pl_gb = _kv_per_token_bytes(spec, enum.q) * B * seq_len / L / GB
         if enum.delegate:
-            q_xfer_gb = (B * seq_len * spec.hidden_dim * 2) / GB
-            return q_xfer_gb / pcie * c_c + kv_pl_gb * (c_d / disk_eff)
+            # Cost model charges FULL q_xfer whenever c_c > 0 (not proportional to c_c).
+            # q_tokens is the number of query tokens: seq_len for prefill, 1 for decode.
+            n_q = q_tokens if q_tokens is not None else seq_len
+            q_xfer_gb = (B * n_q * spec.hidden_dim * 2) / GB
+            return q_xfer_gb / pcie + kv_pl_gb * (c_d / disk_eff)
         return kv_pl_gb * (c_c / pcie + c_d / disk_eff)
 
     def _act_term(seq_len: int):
@@ -162,16 +165,16 @@ def solve_inner_lp(
         tau_dec = pulp.LpVariable("tau_dec", 0)
         prob += tau_pre >= t_compute_pre
         prob += tau_pre >= _w_load_term()
-        prob += tau_pre >= _kv_term(s)
+        prob += tau_pre >= _kv_term(s, q_tokens=s)
         prob += tau_pre >= _act_term(s)
         prob += tau_dec >= t_compute_dec
         prob += tau_dec >= _w_load_term()
-        prob += tau_dec >= _kv_term(int(kv_avg))
+        prob += tau_dec >= _kv_term(int(kv_avg), q_tokens=1)
         prob += tau_dec >= _act_term(1)
         t_block_expr = L * (tau_pre + d * tau_dec)
     else:
-        t_pre = t_compute_pre + _w_load_term() + _kv_term(s) + _act_term(s)
-        t_dec = t_compute_dec + _w_load_term() + _kv_term(int(kv_avg)) + _act_term(1)
+        t_pre = t_compute_pre + _w_load_term() + _kv_term(s, q_tokens=s) + _act_term(s)
+        t_dec = t_compute_dec + _w_load_term() + _kv_term(int(kv_avg), q_tokens=1) + _act_term(1)
         t_block_expr = L * (t_pre + d * t_dec)
 
     prob += t_block_expr / B

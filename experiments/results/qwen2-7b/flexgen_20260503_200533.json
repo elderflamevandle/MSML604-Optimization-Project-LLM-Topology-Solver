@@ -1,0 +1,541 @@
+{
+  "timestamp": "2026-05-03T20:05:44.098826+00:00",
+  "machine_id": "LAPTOP-URUBB3OO_NVIDIA_GeForce_RTX_4050_Laptop_GPU",
+  "input": {
+    "system": {
+      "gpu_vram_gb": 2.0,
+      "ram_gb": 16.0,
+      "disk_gb": 383.3845520019531,
+      "pcie_bw_gbs": 5.640565139498095,
+      "disk_bw_gbs": 1.2952427247401033,
+      "tflops_fp16": 25.446003502684945,
+      "tflops_int8": 49.05293052642065,
+      "tflops_int4": 98.86627600880632
+    },
+    "model": {
+      "hf_id": "Qwen/Qwen2-7B",
+      "num_layers": 28,
+      "hidden_dim": 3584,
+      "num_heads": 28,
+      "num_kv_heads": 4,
+      "intermediate_size": 18944,
+      "vocab_size": 152064,
+      "dtype_bytes": 2
+    },
+    "workload": {
+      "prompt_len": 512,
+      "decode_len": 128
+    }
+  },
+  "best_policy": {
+    "gpu_batch_size": 32,
+    "num_gpu_batches": 16,
+    "block_size": 512,
+    "compression": "int4",
+    "cpu_compute_delegate": true,
+    "overlap_io_compute": true,
+    "weights": {
+      "gpu": 0.6582,
+      "cpu": 0.3418,
+      "disk": 0.0
+    },
+    "kv_cache": {
+      "gpu": 0.0,
+      "cpu": 0.9552,
+      "disk": 0.0448
+    },
+    "activations": {
+      "gpu": 0.0,
+      "cpu": 0.22,
+      "disk": 0.78
+    },
+    "per_token_latency_ms": 120.6318
+  },
+  "objective": {
+    "per_token_latency_ms": 120.6318,
+    "throughput_tok_s": 8.2897,
+    "t_block_ms": 61763.4896
+  },
+  "top_k_candidates": [
+    {
+      "gpu_batch_size": 32,
+      "num_gpu_batches": 16,
+      "block_size": 512,
+      "compression": "int4",
+      "cpu_compute_delegate": true,
+      "overlap_io_compute": true,
+      "weights": {
+        "gpu": 0.6582,
+        "cpu": 0.3418,
+        "disk": 0.0
+      },
+      "kv_cache": {
+        "gpu": 0.0,
+        "cpu": 0.9552,
+        "disk": 0.0448
+      },
+      "activations": {
+        "gpu": 0.0,
+        "cpu": 0.22,
+        "disk": 0.78
+      },
+      "per_token_latency_ms": 120.6318
+    },
+    {
+      "gpu_batch_size": 16,
+      "num_gpu_batches": 16,
+      "block_size": 256,
+      "compression": "int4",
+      "cpu_compute_delegate": true,
+      "overlap_io_compute": true,
+      "weights": {
+        "gpu": 0.6582,
+        "cpu": 0.3418,
+        "disk": 0.0
+      },
+      "kv_cache": {
+        "gpu": 0.0,
+        "cpu": 1.0,
+        "disk": 0.0
+      },
+      "activations": {
+        "gpu": 0.0,
+        "cpu": 0.3128,
+        "disk": 0.6872
+      },
+      "per_token_latency_ms": 159.8106
+    },
+    {
+      "gpu_batch_size": 32,
+      "num_gpu_batches": 8,
+      "block_size": 256,
+      "compression": "int4",
+      "cpu_compute_delegate": true,
+      "overlap_io_compute": true,
+      "weights": {
+        "gpu": 0.6582,
+        "cpu": 0.3418,
+        "disk": 0.0
+      },
+      "kv_cache": {
+        "gpu": 0.0,
+        "cpu": 1.0,
+        "disk": 0.0
+      },
+      "activations": {
+        "gpu": 0.0,
+        "cpu": 0.3128,
+        "disk": 0.6872
+      },
+      "per_token_latency_ms": 159.8106
+    },
+    {
+      "gpu_batch_size": 32,
+      "num_gpu_batches": 16,
+      "block_size": 512,
+      "compression": "int4",
+      "cpu_compute_delegate": false,
+      "overlap_io_compute": true,
+      "weights": {
+        "gpu": 0.1569,
+        "cpu": 0.8431,
+        "disk": 0.0
+      },
+      "kv_cache": {
+        "gpu": 0.3482,
+        "cpu": 0.6518,
+        "disk": 0.0
+      },
+      "activations": {
+        "gpu": 0.0,
+        "cpu": 0.216,
+        "disk": 0.784
+      },
+      "per_token_latency_ms": 188.4453
+    },
+    {
+      "gpu_batch_size": 16,
+      "num_gpu_batches": 16,
+      "block_size": 256,
+      "compression": "int4",
+      "cpu_compute_delegate": false,
+      "overlap_io_compute": true,
+      "weights": {
+        "gpu": 0.4975,
+        "cpu": 0.5025,
+        "disk": 0.0
+      },
+      "kv_cache": {
+        "gpu": 0.2231,
+        "cpu": 0.7769,
+        "disk": 0.0
+      },
+      "activations": {
+        "gpu": 0.0,
+        "cpu": 0.5214,
+        "disk": 0.4786
+      },
+      "per_token_latency_ms": 203.0792
+    },
+    {
+      "gpu_batch_size": 32,
+      "num_gpu_batches": 8,
+      "block_size": 256,
+      "compression": "int4",
+      "cpu_compute_delegate": false,
+      "overlap_io_compute": true,
+      "weights": {
+        "gpu": 0.4975,
+        "cpu": 0.5025,
+        "disk": 0.0
+      },
+      "kv_cache": {
+        "gpu": 0.2231,
+        "cpu": 0.7769,
+        "disk": 0.0
+      },
+      "activations": {
+        "gpu": 0.0,
+        "cpu": 0.5214,
+        "disk": 0.4786
+      },
+      "per_token_latency_ms": 203.0792
+    },
+    {
+      "gpu_batch_size": 32,
+      "num_gpu_batches": 16,
+      "block_size": 512,
+      "compression": "int4",
+      "cpu_compute_delegate": true,
+      "overlap_io_compute": false,
+      "weights": {
+        "gpu": 0.6582,
+        "cpu": 0.3418,
+        "disk": 0.0
+      },
+      "kv_cache": {
+        "gpu": 0.0,
+        "cpu": 1.0,
+        "disk": 0.0
+      },
+      "activations": {
+        "gpu": 0.0,
+        "cpu": 0.216,
+        "disk": 0.784
+      },
+      "per_token_latency_ms": 245.8975
+    },
+    {
+      "gpu_batch_size": 8,
+      "num_gpu_batches": 16,
+      "block_size": 128,
+      "compression": "int4",
+      "cpu_compute_delegate": false,
+      "overlap_io_compute": true,
+      "weights": {
+        "gpu": 0.6582,
+        "cpu": 0.3418,
+        "disk": 0.0
+      },
+      "kv_cache": {
+        "gpu": 0.0,
+        "cpu": 0.9869,
+        "disk": 0.0131
+      },
+      "activations": {
+        "gpu": 0.0,
+        "cpu": 0.3128,
+        "disk": 0.6872
+      },
+      "per_token_latency_ms": 251.8818
+    },
+    {
+      "gpu_batch_size": 8,
+      "num_gpu_batches": 16,
+      "block_size": 128,
+      "compression": "int4",
+      "cpu_compute_delegate": true,
+      "overlap_io_compute": true,
+      "weights": {
+        "gpu": 0.6582,
+        "cpu": 0.3418,
+        "disk": 0.0
+      },
+      "kv_cache": {
+        "gpu": 0.0,
+        "cpu": 1.0,
+        "disk": 0.0
+      },
+      "activations": {
+        "gpu": 0.0,
+        "cpu": 0.3128,
+        "disk": 0.6872
+      },
+      "per_token_latency_ms": 251.8818
+    },
+    {
+      "gpu_batch_size": 16,
+      "num_gpu_batches": 8,
+      "block_size": 128,
+      "compression": "int4",
+      "cpu_compute_delegate": false,
+      "overlap_io_compute": true,
+      "weights": {
+        "gpu": 0.6582,
+        "cpu": 0.3418,
+        "disk": 0.0
+      },
+      "kv_cache": {
+        "gpu": 0.0,
+        "cpu": 0.9869,
+        "disk": 0.0131
+      },
+      "activations": {
+        "gpu": 0.0,
+        "cpu": 0.3128,
+        "disk": 0.6872
+      },
+      "per_token_latency_ms": 251.8818
+    },
+    {
+      "gpu_batch_size": 16,
+      "num_gpu_batches": 8,
+      "block_size": 128,
+      "compression": "int4",
+      "cpu_compute_delegate": true,
+      "overlap_io_compute": true,
+      "weights": {
+        "gpu": 0.6582,
+        "cpu": 0.3418,
+        "disk": 0.0
+      },
+      "kv_cache": {
+        "gpu": 0.0,
+        "cpu": 1.0,
+        "disk": 0.0
+      },
+      "activations": {
+        "gpu": 0.0,
+        "cpu": 0.3128,
+        "disk": 0.6872
+      },
+      "per_token_latency_ms": 251.8818
+    },
+    {
+      "gpu_batch_size": 32,
+      "num_gpu_batches": 4,
+      "block_size": 128,
+      "compression": "int4",
+      "cpu_compute_delegate": false,
+      "overlap_io_compute": true,
+      "weights": {
+        "gpu": 0.6582,
+        "cpu": 0.3418,
+        "disk": 0.0
+      },
+      "kv_cache": {
+        "gpu": 0.0,
+        "cpu": 0.9869,
+        "disk": 0.0131
+      },
+      "activations": {
+        "gpu": 0.0,
+        "cpu": 0.3128,
+        "disk": 0.6872
+      },
+      "per_token_latency_ms": 251.8818
+    },
+    {
+      "gpu_batch_size": 32,
+      "num_gpu_batches": 4,
+      "block_size": 128,
+      "compression": "int4",
+      "cpu_compute_delegate": true,
+      "overlap_io_compute": true,
+      "weights": {
+        "gpu": 0.6582,
+        "cpu": 0.3418,
+        "disk": 0.0
+      },
+      "kv_cache": {
+        "gpu": 0.0,
+        "cpu": 1.0,
+        "disk": 0.0
+      },
+      "activations": {
+        "gpu": 0.0,
+        "cpu": 0.3128,
+        "disk": 0.6872
+      },
+      "per_token_latency_ms": 251.8818
+    },
+    {
+      "gpu_batch_size": 16,
+      "num_gpu_batches": 16,
+      "block_size": 256,
+      "compression": "int4",
+      "cpu_compute_delegate": true,
+      "overlap_io_compute": false,
+      "weights": {
+        "gpu": 0.6582,
+        "cpu": 0.3418,
+        "disk": 0.0
+      },
+      "kv_cache": {
+        "gpu": 0.0,
+        "cpu": 1.0,
+        "disk": 0.0
+      },
+      "activations": {
+        "gpu": 0.0,
+        "cpu": 0.5214,
+        "disk": 0.4786
+      },
+      "per_token_latency_ms": 264.0921
+    },
+    {
+      "gpu_batch_size": 32,
+      "num_gpu_batches": 8,
+      "block_size": 256,
+      "compression": "int4",
+      "cpu_compute_delegate": true,
+      "overlap_io_compute": false,
+      "weights": {
+        "gpu": 0.6582,
+        "cpu": 0.3418,
+        "disk": 0.0
+      },
+      "kv_cache": {
+        "gpu": 0.0,
+        "cpu": 1.0,
+        "disk": 0.0
+      },
+      "activations": {
+        "gpu": 0.0,
+        "cpu": 0.5214,
+        "disk": 0.4786
+      },
+      "per_token_latency_ms": 264.0921
+    },
+    {
+      "gpu_batch_size": 8,
+      "num_gpu_batches": 16,
+      "block_size": 128,
+      "compression": "int4",
+      "cpu_compute_delegate": true,
+      "overlap_io_compute": false,
+      "weights": {
+        "gpu": 0.6582,
+        "cpu": 0.3418,
+        "disk": 0.0
+      },
+      "kv_cache": {
+        "gpu": 0.0,
+        "cpu": 1.0,
+        "disk": 0.0
+      },
+      "activations": {
+        "gpu": 0.0,
+        "cpu": 1.0,
+        "disk": 0.0
+      },
+      "per_token_latency_ms": 312.6773
+    },
+    {
+      "gpu_batch_size": 16,
+      "num_gpu_batches": 8,
+      "block_size": 128,
+      "compression": "int4",
+      "cpu_compute_delegate": true,
+      "overlap_io_compute": false,
+      "weights": {
+        "gpu": 0.6582,
+        "cpu": 0.3418,
+        "disk": 0.0
+      },
+      "kv_cache": {
+        "gpu": 0.0,
+        "cpu": 1.0,
+        "disk": 0.0
+      },
+      "activations": {
+        "gpu": 0.0,
+        "cpu": 1.0,
+        "disk": 0.0
+      },
+      "per_token_latency_ms": 312.6773
+    },
+    {
+      "gpu_batch_size": 32,
+      "num_gpu_batches": 4,
+      "block_size": 128,
+      "compression": "int4",
+      "cpu_compute_delegate": true,
+      "overlap_io_compute": false,
+      "weights": {
+        "gpu": 0.6582,
+        "cpu": 0.3418,
+        "disk": 0.0
+      },
+      "kv_cache": {
+        "gpu": 0.0,
+        "cpu": 1.0,
+        "disk": 0.0
+      },
+      "activations": {
+        "gpu": 0.0,
+        "cpu": 1.0,
+        "disk": 0.0
+      },
+      "per_token_latency_ms": 312.6773
+    },
+    {
+      "gpu_batch_size": 32,
+      "num_gpu_batches": 16,
+      "block_size": 512,
+      "compression": "int4",
+      "cpu_compute_delegate": false,
+      "overlap_io_compute": false,
+      "weights": {
+        "gpu": 0.6582,
+        "cpu": 0.3418,
+        "disk": 0.0
+      },
+      "kv_cache": {
+        "gpu": 0.0,
+        "cpu": 1.0,
+        "disk": 0.0
+      },
+      "activations": {
+        "gpu": 0.0,
+        "cpu": 0.216,
+        "disk": 0.784
+      },
+      "per_token_latency_ms": 400.1148
+    },
+    {
+      "gpu_batch_size": 16,
+      "num_gpu_batches": 16,
+      "block_size": 256,
+      "compression": "int4",
+      "cpu_compute_delegate": false,
+      "overlap_io_compute": false,
+      "weights": {
+        "gpu": 0.6582,
+        "cpu": 0.3418,
+        "disk": 0.0
+      },
+      "kv_cache": {
+        "gpu": 0.0,
+        "cpu": 1.0,
+        "disk": 0.0
+      },
+      "activations": {
+        "gpu": 0.0,
+        "cpu": 0.5214,
+        "disk": 0.4786
+      },
+      "per_token_latency_ms": 418.3094
+    }
+  ]
+}

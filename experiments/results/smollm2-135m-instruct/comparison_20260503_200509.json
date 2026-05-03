@@ -1,0 +1,104 @@
+{
+  "timestamp": "2026-05-03T20:05:09.189242+00:00",
+  "model_id": "models/smollm2-135m-instruct",
+  "sim_gpu_gb": null,
+  "sim_ram_gb": null,
+  "lp_result": {
+    "timestamp": "2026-05-03T20:05:09.062302+00:00",
+    "method": "lp_search"
+  },
+  "grid_result": {
+    "timestamp": "2026-05-03T20:05:09.139709+00:00",
+    "method": "grid_search"
+  },
+  "latency_ms": {
+    "lp": 1.4532,
+    "grid": 1.4532,
+    "grid_worse_by_pct": 0.0
+  },
+  "throughput_tok_s": {
+    "lp": 688.1233,
+    "grid": 688.1233,
+    "lp_better_by_pct": 0.0
+  },
+  "search_time_s": {
+    "lp": "N/A",
+    "grid": 0.065
+  },
+  "best_policy": {
+    "lp": {
+      "gpu_batch_size": 1,
+      "num_gpu_batches": 2,
+      "block_size": 2,
+      "compression": "int4",
+      "cpu_compute_delegate": false,
+      "overlap_io_compute": true,
+      "weights": {
+        "gpu": 1.0,
+        "cpu": 0.0,
+        "disk": 0.0
+      },
+      "kv_cache": {
+        "gpu": 1.0,
+        "cpu": 0.0,
+        "disk": 0.0
+      },
+      "activations": {
+        "gpu": 1.0,
+        "cpu": 0.0,
+        "disk": 0.0
+      },
+      "per_token_latency_ms": 1.4532
+    },
+    "grid": {
+      "gpu_batch_size": 1,
+      "num_gpu_batches": 1,
+      "block_size": 1,
+      "compression": "int4",
+      "cpu_compute_delegate": false,
+      "overlap_io_compute": false,
+      "weights": {
+        "gpu": 1.0,
+        "cpu": 0.0,
+        "disk": 0.0
+      },
+      "kv_cache": {
+        "gpu": 1.0,
+        "cpu": 0.0,
+        "disk": 0.0
+      },
+      "activations": {
+        "gpu": 1.0,
+        "cpu": 0.0,
+        "disk": 0.0
+      },
+      "per_token_latency_ms": 1.4532
+    }
+  },
+  "input": {
+    "system": {
+      "gpu_vram_gb": 4.970703125,
+      "ram_gb": 2.4047889709472656,
+      "disk_gb": 383.3861427307129,
+      "pcie_bw_gbs": 5.640565139498095,
+      "disk_bw_gbs": 1.2952427247401033,
+      "tflops_fp16": 25.446003502684945,
+      "tflops_int8": 49.05293052642065,
+      "tflops_int4": 98.86627600880632
+    },
+    "model": {
+      "hf_id": "models/smollm2-135m-instruct",
+      "num_layers": 30,
+      "hidden_dim": 576,
+      "num_heads": 9,
+      "num_kv_heads": 3,
+      "intermediate_size": 1536,
+      "vocab_size": 49152,
+      "dtype_bytes": 2
+    },
+    "workload": {
+      "prompt_len": 512,
+      "decode_len": 128
+    }
+  }
+}

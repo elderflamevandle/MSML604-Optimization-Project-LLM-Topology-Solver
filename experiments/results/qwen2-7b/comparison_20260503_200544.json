@@ -1,0 +1,104 @@
+{
+  "timestamp": "2026-05-03T20:05:44.343193+00:00",
+  "model_id": "Qwen/Qwen2-7B",
+  "sim_gpu_gb": 2.0,
+  "sim_ram_gb": 16.0,
+  "lp_result": {
+    "timestamp": "2026-05-03T20:05:44.098826+00:00",
+    "method": "lp_search"
+  },
+  "grid_result": {
+    "timestamp": "2026-05-03T20:05:44.295704+00:00",
+    "method": "grid_search"
+  },
+  "latency_ms": {
+    "lp": 120.6318,
+    "grid": 158.1947,
+    "grid_worse_by_pct": 31.14
+  },
+  "throughput_tok_s": {
+    "lp": 8.2897,
+    "grid": 6.3213,
+    "lp_better_by_pct": 31.14
+  },
+  "search_time_s": {
+    "lp": "N/A",
+    "grid": 0.054
+  },
+  "best_policy": {
+    "lp": {
+      "gpu_batch_size": 32,
+      "num_gpu_batches": 16,
+      "block_size": 512,
+      "compression": "int4",
+      "cpu_compute_delegate": true,
+      "overlap_io_compute": true,
+      "weights": {
+        "gpu": 0.6582,
+        "cpu": 0.3418,
+        "disk": 0.0
+      },
+      "kv_cache": {
+        "gpu": 0.0,
+        "cpu": 0.9552,
+        "disk": 0.0448
+      },
+      "activations": {
+        "gpu": 0.0,
+        "cpu": 0.22,
+        "disk": 0.78
+      },
+      "per_token_latency_ms": 120.6318
+    },
+    "grid": {
+      "gpu_batch_size": 32,
+      "num_gpu_batches": 16,
+      "block_size": 512,
+      "compression": "int4",
+      "cpu_compute_delegate": true,
+      "overlap_io_compute": true,
+      "weights": {
+        "gpu": 0.5,
+        "cpu": 0.5,
+        "disk": 0.0
+      },
+      "kv_cache": {
+        "gpu": 0.0,
+        "cpu": 1.0,
+        "disk": 0.0
+      },
+      "activations": {
+        "gpu": 0.0,
+        "cpu": 0.0,
+        "disk": 1.0
+      },
+      "per_token_latency_ms": 158.1947
+    }
+  },
+  "input": {
+    "system": {
+      "gpu_vram_gb": 2.0,
+      "ram_gb": 16.0,
+      "disk_gb": 383.3845520019531,
+      "pcie_bw_gbs": 5.640565139498095,
+      "disk_bw_gbs": 1.2952427247401033,
+      "tflops_fp16": 25.446003502684945,
+      "tflops_int8": 49.05293052642065,
+      "tflops_int4": 98.86627600880632
+    },
+    "model": {
+      "hf_id": "Qwen/Qwen2-7B",
+      "num_layers": 28,
+      "hidden_dim": 3584,
+      "num_heads": 28,
+      "num_kv_heads": 4,
+      "intermediate_size": 18944,
+      "vocab_size": 152064,
+      "dtype_bytes": 2
+    },
+    "workload": {
+      "prompt_len": 512,
+      "decode_len": 128
+    }
+  }
+}

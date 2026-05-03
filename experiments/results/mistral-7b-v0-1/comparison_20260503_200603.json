@@ -1,0 +1,104 @@
+{
+  "timestamp": "2026-05-03T20:06:03.113382+00:00",
+  "model_id": "mistralai/Mistral-7B-v0.1",
+  "sim_gpu_gb": 2.0,
+  "sim_ram_gb": 16.0,
+  "lp_result": {
+    "timestamp": "2026-05-03T20:06:02.874230+00:00",
+    "method": "lp_search"
+  },
+  "grid_result": {
+    "timestamp": "2026-05-03T20:06:03.065734+00:00",
+    "method": "grid_search"
+  },
+  "latency_ms": {
+    "lp": 166.5605,
+    "grid": 190.6935,
+    "grid_worse_by_pct": 14.49
+  },
+  "throughput_tok_s": {
+    "lp": 6.0038,
+    "grid": 5.244,
+    "lp_better_by_pct": 14.49
+  },
+  "search_time_s": {
+    "lp": "N/A",
+    "grid": 0.073
+  },
+  "best_policy": {
+    "lp": {
+      "gpu_batch_size": 32,
+      "num_gpu_batches": 16,
+      "block_size": 512,
+      "compression": "int4",
+      "cpu_compute_delegate": true,
+      "overlap_io_compute": true,
+      "weights": {
+        "gpu": 0.6154,
+        "cpu": 0.3846,
+        "disk": 0.0
+      },
+      "kv_cache": {
+        "gpu": 0.0,
+        "cpu": 0.9766,
+        "disk": 0.0234
+      },
+      "activations": {
+        "gpu": 0.0,
+        "cpu": 0.0779,
+        "disk": 0.9221
+      },
+      "per_token_latency_ms": 166.5605
+    },
+    "grid": {
+      "gpu_batch_size": 32,
+      "num_gpu_batches": 16,
+      "block_size": 512,
+      "compression": "int4",
+      "cpu_compute_delegate": true,
+      "overlap_io_compute": true,
+      "weights": {
+        "gpu": 0.5,
+        "cpu": 0.5,
+        "disk": 0.0
+      },
+      "kv_cache": {
+        "gpu": 0.0,
+        "cpu": 1.0,
+        "disk": 0.0
+      },
+      "activations": {
+        "gpu": 0.0,
+        "cpu": 0.0,
+        "disk": 1.0
+      },
+      "per_token_latency_ms": 190.6935
+    }
+  },
+  "input": {
+    "system": {
+      "gpu_vram_gb": 2.0,
+      "ram_gb": 16.0,
+      "disk_gb": 383.38372802734375,
+      "pcie_bw_gbs": 5.640565139498095,
+      "disk_bw_gbs": 1.2952427247401033,
+      "tflops_fp16": 25.446003502684945,
+      "tflops_int8": 49.05293052642065,
+      "tflops_int4": 98.86627600880632
+    },
+    "model": {
+      "hf_id": "mistralai/Mistral-7B-v0.1",
+      "num_layers": 32,
+      "hidden_dim": 4096,
+      "num_heads": 32,
+      "num_kv_heads": 8,
+      "intermediate_size": 14336,
+      "vocab_size": 32000,
+      "dtype_bytes": 2
+    },
+    "workload": {
+      "prompt_len": 512,
+      "decode_len": 128
+    }
+  }
+}

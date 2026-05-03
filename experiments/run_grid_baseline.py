@@ -1,10 +1,13 @@
-"""FlexGen faithful policy-search orchestrator.
+"""
+Grid search baseline runner — mirrors run_flexgen.py structure.
+
+Outputs a JSON in the same schema as run_flexgen.py plus extra keys:
+  "method": "grid_search"
+  "search_stats": { n_total, n_feasible, n_infeasible, elapsed_s, inner_grid_size, step }
 
 CLI:
-    python experiments/run_flexgen.py \
-        --model meta-llama/Meta-Llama-3-8B \
-        --workload configs/workload.yaml \
-        [--recalibrate] [--verbose]
+    python experiments/run_grid_baseline.py --model models/smollm2-135m-instruct
+    python experiments/run_grid_baseline.py --model Qwen/Qwen2-1.5B --verbose
 """
 import argparse
 import json
@@ -18,29 +21,26 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 from src.flexgen.system_probe import probe_live_capacity, LiveCapacity
-from src.flexgen.calibration import (
-    ensure_calibration, machine_id, SystemCoefficients,
-)
+from src.flexgen.calibration import ensure_calibration, machine_id, SystemCoefficients
 from src.flexgen.model_introspect import load_model_spec, ModelSpec
 from src.flexgen.workload import load_workload, WorkloadSpec
-from src.flexgen.policy_search import run_policy_search, PolicyResult, Candidate
+from src.flexgen.policy_search import PolicyResult, Candidate
+from src.flexgen.grid_search_baseline import run_grid_search, GridSearchResult
 
 
 def _setup_logging(log_path: Path, verbose: bool) -> None:
     fmt = "%(asctime)s | %(levelname)s | %(name)s | %(message)s"
-    file_handler = logging.FileHandler(log_path, encoding="utf-8")
-    file_handler.setLevel(logging.DEBUG)
-    file_handler.setFormatter(logging.Formatter(fmt))
-
-    console = logging.StreamHandler()
-    console.setLevel(logging.DEBUG if verbose else logging.INFO)
-    console.setFormatter(logging.Formatter(fmt))
-
+    fh = logging.FileHandler(log_path, encoding="utf-8")
+    fh.setLevel(logging.DEBUG)
+    fh.setFormatter(logging.Formatter(fmt))
+    ch = logging.StreamHandler()
+    ch.setLevel(logging.DEBUG if verbose else logging.INFO)
+    ch.setFormatter(logging.Formatter(fmt))
     root = logging.getLogger()
     root.setLevel(logging.DEBUG)
     root.handlers.clear()
-    root.addHandler(file_handler)
-    root.addHandler(console)
+    root.addHandler(fh)
+    root.addHandler(ch)
 
 
 def _candidate_to_json(c: Candidate) -> dict:
@@ -65,25 +65,38 @@ def _candidate_to_json(c: Candidate) -> dict:
 
 
 def build_output_payload(
-    result: PolicyResult, cap: LiveCapacity, coef: SystemCoefficients,
-    spec: ModelSpec, wl: WorkloadSpec, machine_id: str,
+    gs: GridSearchResult,
+    cap: LiveCapacity,
+    coef: SystemCoefficients,
+    spec: ModelSpec,
+    wl: WorkloadSpec,
+    mid: str,
 ) -> dict:
-    best = result.best
+    best = gs.policy_result.best
     return {
+        "method": "grid_search",
         "timestamp": datetime.now(timezone.utc).isoformat(),
-        "machine_id": machine_id,
+        "machine_id": mid,
+        "search_stats": {
+            "n_total":          gs.n_total,
+            "n_feasible":       gs.n_feasible,
+            "n_infeasible":     gs.n_infeasible,
+            "elapsed_s":        round(gs.elapsed_s, 3),
+            "inner_grid_size":  gs.inner_grid_size,
+            "step":             gs.step,
+        },
         "input": {
-            "system": {**asdict(cap), **asdict(coef)},
-            "model": asdict(spec),
+            "system":   {**asdict(cap), **asdict(coef)},
+            "model":    asdict(spec),
             "workload": asdict(wl),
         },
         "best_policy": _candidate_to_json(best),
         "objective": {
             "per_token_latency_ms": round(best.t_per_token_s * 1000, 4),
-            "throughput_tok_s": round(1.0 / best.t_per_token_s, 4),
-            "t_block_ms": round(best.t_block_s * 1000, 4),
+            "throughput_tok_s":     round(1.0 / best.t_per_token_s, 4),
+            "t_block_ms":           round(best.t_block_s * 1000, 4),
         },
-        "top_k_candidates": [_candidate_to_json(c) for c in result.top_k],
+        "top_k_candidates": [_candidate_to_json(c) for c in gs.policy_result.top_k],
     }
 
 
@@ -99,18 +112,17 @@ def run(
     sim_ram_gb: float | None = None,
 ) -> str:
     ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
-    log_path = Path(log_dir) / f"flexgen_{ts}.log"
-    json_path = Path(output_dir) / f"flexgen_{ts}.json"
+    log_path = Path(log_dir) / f"grid_baseline_{ts}.log"
+    json_path = Path(output_dir) / f"grid_baseline_{ts}.json"
     Path(output_dir).mkdir(parents=True, exist_ok=True)
     Path(log_dir).mkdir(parents=True, exist_ok=True)
 
     _setup_logging(log_path, verbose)
-    log = logging.getLogger("run_flexgen")
-    log.info("=== FlexGen policy-search run ===")
+    log = logging.getLogger("run_grid_baseline")
+    log.info("=== Grid search baseline run ===")
     log.info("model=%s workload=%s recalibrate=%s", model_id, workload_path, recalibrate)
 
     mid = machine_id()
-    log.info("machine_id=%s", mid)
     cap = probe_live_capacity(project_root=str(ROOT))
     if sim_gpu_gb is not None or sim_ram_gb is not None:
         cap = LiveCapacity(
@@ -135,34 +147,40 @@ def run(
     wl = load_workload(workload_path)
     log.info("workload: prompt_len=%d decode_len=%d", wl.prompt_len, wl.decode_len)
 
-    log.info("Running policy search...")
-    result = run_policy_search(cap, spec, wl, coef, top_k=20)
-    log.info("Best: gbs=%d num_gb=%d q=%s delegate=%s overlap=%s -> %.2f ms/token",
-             result.best.enum.gbs, result.best.enum.num_gb, result.best.enum.q,
-             result.best.enum.delegate, result.best.enum.overlap,
-             result.best.t_per_token_s * 1000)
+    log.info("Running grid search (240 outer × 3 375 inner = 810 000 evaluations)…")
+    gs = run_grid_search(cap, spec, wl, coef, top_k=20)
 
-    payload = build_output_payload(result, cap, coef, spec, wl, machine_id=mid)
+    best = gs.policy_result.best
+    log.info(
+        "Best: gbs=%d num_gb=%d q=%s delegate=%s overlap=%s -> %.2f ms/token  (%.1fs elapsed)",
+        best.enum.gbs, best.enum.num_gb, best.enum.q,
+        best.enum.delegate, best.enum.overlap,
+        best.t_per_token_s * 1000, gs.elapsed_s,
+    )
+
+    payload = build_output_payload(gs, cap, coef, spec, wl, mid)
     json_path.write_text(json.dumps(payload, indent=2))
-    log.info("Wrote results: %s", json_path)
+    log.info("Wrote: %s", json_path)
     return str(json_path)
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--model", default="meta-llama/Meta-Llama-3-8B")
-    parser.add_argument("--workload", default=str(ROOT / "configs" / "workload.yaml"))
+    parser = argparse.ArgumentParser(
+        description="Grid search baseline for FlexGen 14-parameter policy."
+    )
+    parser.add_argument("--model",       default="meta-llama/Meta-Llama-3-8B")
+    parser.add_argument("--workload",    default=str(ROOT / "configs" / "workload.yaml"))
     parser.add_argument("--recalibrate", action="store_true")
-    parser.add_argument("--verbose", action="store_true")
-    parser.add_argument("--output-dir", default=str(ROOT / "experiments" / "results"))
-    parser.add_argument("--log-dir", default=str(ROOT / "experiments" / "logs"))
-    parser.add_argument("--cache-dir", default=str(ROOT / "configs" / "system_calibration"))
+    parser.add_argument("--verbose",     action="store_true")
+    parser.add_argument("--output-dir",  default=str(ROOT / "experiments" / "results"))
+    parser.add_argument("--log-dir",     default=str(ROOT / "experiments" / "logs"))
+    parser.add_argument("--cache-dir",   default=str(ROOT / "configs" / "system_calibration"))
     parser.add_argument("--sim-gpu-gb", type=float, default=None,
                         help="Simulate this GPU VRAM (GB) instead of probing real hardware")
     parser.add_argument("--sim-ram-gb", type=float, default=None,
                         help="Simulate this RAM (GB) instead of probing real hardware")
     args = parser.parse_args()
-    run(
+    path = run(
         model_id=args.model,
         workload_path=args.workload,
         recalibrate=args.recalibrate,
@@ -173,6 +191,7 @@ def main() -> None:
         sim_gpu_gb=args.sim_gpu_gb,
         sim_ram_gb=args.sim_ram_gb,
     )
+    print(f"\nGrid baseline result: {path}")
 
 
 if __name__ == "__main__":

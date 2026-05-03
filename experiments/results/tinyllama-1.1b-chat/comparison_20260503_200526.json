@@ -1,0 +1,104 @@
+{
+  "timestamp": "2026-05-03T20:05:26.761958+00:00",
+  "model_id": "models/tinyllama-1.1b-chat",
+  "sim_gpu_gb": 0.3,
+  "sim_ram_gb": 8.0,
+  "lp_result": {
+    "timestamp": "2026-05-03T20:05:26.645100+00:00",
+    "method": "lp_search"
+  },
+  "grid_result": {
+    "timestamp": "2026-05-03T20:05:26.717770+00:00",
+    "method": "grid_search"
+  },
+  "latency_ms": {
+    "lp": 33.0359,
+    "grid": 42.4978,
+    "grid_worse_by_pct": 28.64
+  },
+  "throughput_tok_s": {
+    "lp": 30.2701,
+    "grid": 23.5306,
+    "lp_better_by_pct": 28.64
+  },
+  "search_time_s": {
+    "lp": "N/A",
+    "grid": 0.059
+  },
+  "best_policy": {
+    "lp": {
+      "gpu_batch_size": 16,
+      "num_gpu_batches": 16,
+      "block_size": 256,
+      "compression": "int4",
+      "cpu_compute_delegate": true,
+      "overlap_io_compute": true,
+      "weights": {
+        "gpu": 0.6649,
+        "cpu": 0.3351,
+        "disk": 0.0
+      },
+      "kv_cache": {
+        "gpu": 0.0,
+        "cpu": 0.9686,
+        "disk": 0.0314
+      },
+      "activations": {
+        "gpu": 0.0,
+        "cpu": 0.6379,
+        "disk": 0.3621
+      },
+      "per_token_latency_ms": 33.0359
+    },
+    "grid": {
+      "gpu_batch_size": 32,
+      "num_gpu_batches": 16,
+      "block_size": 512,
+      "compression": "int4",
+      "cpu_compute_delegate": true,
+      "overlap_io_compute": true,
+      "weights": {
+        "gpu": 0.5,
+        "cpu": 0.5,
+        "disk": 0.0
+      },
+      "kv_cache": {
+        "gpu": 0.0,
+        "cpu": 1.0,
+        "disk": 0.0
+      },
+      "activations": {
+        "gpu": 0.0,
+        "cpu": 0.25,
+        "disk": 0.75
+      },
+      "per_token_latency_ms": 42.4978
+    }
+  },
+  "input": {
+    "system": {
+      "gpu_vram_gb": 0.3,
+      "ram_gb": 8.0,
+      "disk_gb": 383.3853569030762,
+      "pcie_bw_gbs": 5.640565139498095,
+      "disk_bw_gbs": 1.2952427247401033,
+      "tflops_fp16": 25.446003502684945,
+      "tflops_int8": 49.05293052642065,
+      "tflops_int4": 98.86627600880632
+    },
+    "model": {
+      "hf_id": "models/tinyllama-1.1b-chat",
+      "num_layers": 22,
+      "hidden_dim": 2048,
+      "num_heads": 32,
+      "num_kv_heads": 4,
+      "intermediate_size": 5632,
+      "vocab_size": 32000,
+      "dtype_bytes": 2
+    },
+    "workload": {
+      "prompt_len": 512,
+      "decode_len": 128
+    }
+  }
+}
